@@ -42,6 +42,10 @@ Manage your Android enterprise devices directly from Home Assistant using [Googl
 1. Return to the Integrations page within HACS then click the `+ Explore & download repositories` button.
 1. Search for `Android Management API`, select it, then click `Download this repository with HACS`.
 1. Restart Home Assistant to load the integration.
+1. Visit the Wiki for information regarding:
+    - [Initial Setup](https://github.com/Shaffer-Softworks/Android-Management/wiki#initial-setup)
+    - [Post-setup Advice](https://github.com/Shaffer-Softworks/Android-Management/wiki#post-setup-advice)
+    - [Debug Logging](https://github.com/Shaffer-Softworks/Android-Management/wiki#debug-logging)
 
 ### Manually (not recommended)
 
