@@ -134,6 +134,7 @@ KIOSK_APP_SCHEMA = {
     vol.Optional("default_permission_policy", default="GRANT"): _select([
         "GRANT", "PROMPT", "DENY",
     ]),
+    vol.Optional("additional_packages", default=""): _text(multiline=True),
 }
 
 KIOSK_UI_SCHEMA = {
@@ -296,23 +297,145 @@ STRING_FIELD_MAP: dict[str, str] = {
 }
 
 
+def parse_policy_to_options(policy: dict[str, Any]) -> dict[str, Any]:
+    """Reverse-map a live Android Management API policy dict into option keys."""
+    opts: dict[str, Any] = {}
+
+    # ── Applications ──
+    apps = policy.get("applications")
+    if apps and isinstance(apps, list) and len(apps) > 0:
+        # Find the primary kiosk app (KIOSK install type or first app)
+        primary = None
+        additional: list[str] = []
+        for app in apps:
+            if app.get("installType") == "KIOSK" and primary is None:
+                primary = app
+            elif primary is None and app is apps[0]:
+                primary = app
+            else:
+                pkg = app.get("packageName", "")
+                if pkg:
+                    additional.append(pkg)
+
+        if primary:
+            if primary.get("packageName"):
+                opts["package_name"] = primary["packageName"]
+            if primary.get("installType"):
+                opts["install_type"] = primary["installType"]
+            if primary.get("autoUpdateMode"):
+                opts["auto_update_mode"] = primary["autoUpdateMode"]
+            if "lockTaskAllowed" in primary:
+                opts["lock_task_allowed"] = primary["lockTaskAllowed"]
+            if primary.get("defaultPermissionPolicy"):
+                opts["default_permission_policy"] = primary["defaultPermissionPolicy"]
+
+        if additional:
+            opts["additional_packages"] = "\n".join(additional)
+
+    # ── Kiosk customization ──
+    kiosk = policy.get("kioskCustomization", {})
+    for api_key, opt_key in (
+        ("powerButtonActions", "power_button_actions"),
+        ("systemNavigation", "system_navigation"),
+        ("deviceSettings", "device_settings"),
+        ("statusBar", "kiosk_status_bar"),
+        ("systemErrorWarnings", "system_error_warnings"),
+    ):
+        if kiosk.get(api_key):
+            opts[opt_key] = kiosk[api_key]
+
+    # ── Display settings ──
+    display = policy.get("displaySettings", {})
+    brightness = display.get("screenBrightnessSettings", {})
+    if brightness.get("screenBrightnessMode"):
+        opts["screen_brightness_mode"] = brightness["screenBrightnessMode"]
+    if "screenBrightness" in brightness:
+        opts["screen_brightness"] = brightness["screenBrightness"]
+    timeout = display.get("screenTimeoutSettings", {})
+    if timeout.get("screenTimeoutMode"):
+        opts["screen_timeout_mode"] = timeout["screenTimeoutMode"]
+    if timeout.get("screenTimeout"):
+        opts["screen_timeout"] = timeout["screenTimeout"]
+
+    # ── Advanced security ──
+    security = policy.get("advancedSecurityOverrides", {})
+    if security.get("developerSettings"):
+        opts["developer_settings"] = security["developerSettings"]
+    if security.get("untrustedAppsPolicy"):
+        opts["untrusted_apps_policy"] = security["untrustedAppsPolicy"]
+    if security.get("googlePlayProtectVerifyApps"):
+        opts["google_play_protect"] = security["googlePlayProtectVerifyApps"]
+
+    # ── Boolean fields (reverse map) ──
+    for opt_key, api_key in BOOL_FIELD_MAP.items():
+        if api_key in policy:
+            opts[opt_key] = policy[api_key]
+
+    # ── String/enum fields (reverse map) ──
+    for opt_key, api_key in STRING_FIELD_MAP.items():
+        if policy.get(api_key):
+            opts[opt_key] = policy[api_key]
+
+    # ── Maximum time to lock ──
+    if policy.get("maximumTimeToLock"):
+        try:
+            opts["maximum_time_to_lock"] = int(policy["maximumTimeToLock"])
+        except (ValueError, TypeError):
+            pass
+
+    # ── Stay on plugged modes ──
+    if policy.get("stayOnPluggedModes"):
+        opts["stay_on_plugged_modes"] = policy["stayOnPluggedModes"]
+
+    # ── System update ──
+    sys_update = policy.get("systemUpdate", {})
+    if sys_update.get("type"):
+        opts["system_update_type"] = sys_update["type"]
+
+    # ── Support messages ──
+    long_msg = policy.get("longSupportMessage", {})
+    if long_msg.get("defaultMessage"):
+        opts["long_support_message"] = long_msg["defaultMessage"]
+    short_msg = policy.get("shortSupportMessage", {})
+    if short_msg.get("defaultMessage"):
+        opts["short_support_message"] = short_msg["defaultMessage"]
+
+    return opts
+
+
 def build_policy_from_options(opts: dict[str, Any]) -> dict[str, Any]:
     """Construct a full Android Management API policy dict from stored options."""
     policy: dict[str, Any] = {}
 
-    # ── Application ──
+    # ── Applications ──
+    app_list: list[dict[str, Any]] = []
     pkg = opts.get("package_name")
     if pkg:
-        app_policy: dict[str, Any] = {"packageName": pkg}
+        primary: dict[str, Any] = {"packageName": pkg}
         if opts.get("install_type"):
-            app_policy["installType"] = opts["install_type"]
+            primary["installType"] = opts["install_type"]
         if opts.get("auto_update_mode"):
-            app_policy["autoUpdateMode"] = opts["auto_update_mode"]
+            primary["autoUpdateMode"] = opts["auto_update_mode"]
         if "lock_task_allowed" in opts:
-            app_policy["lockTaskAllowed"] = opts["lock_task_allowed"]
+            primary["lockTaskAllowed"] = opts["lock_task_allowed"]
         if opts.get("default_permission_policy"):
-            app_policy["defaultPermissionPolicy"] = opts["default_permission_policy"]
-        policy["applications"] = [app_policy]
+            primary["defaultPermissionPolicy"] = opts["default_permission_policy"]
+        app_list.append(primary)
+
+    extra_raw = opts.get("additional_packages", "")
+    if extra_raw:
+        for line in extra_raw.splitlines():
+            extra_pkg = line.strip()
+            if extra_pkg:
+                app_list.append({
+                    "packageName": extra_pkg,
+                    "installType": "FORCE_INSTALLED",
+                    "defaultPermissionPolicy": "GRANT",
+                    "autoUpdateMode": "AUTO_UPDATE_HIGH_PRIORITY",
+                })
+
+    if app_list:
+        policy["applications"] = app_list
 
     # ── Kiosk customization ──
     kiosk: dict[str, Any] = {}
@@ -518,12 +641,17 @@ class AndroidManagementOptionsFlow(OptionsFlow):
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         self._options: dict[str, Any] = dict(config_entry.options)
+        self._policy_fetched = False
 
     # ── Menu ─────────────────────────────────────────────────────────────
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        if not self._policy_fetched:
+            self._policy_fetched = True
+            await self._fetch_live_policy()
+
         return self.async_show_menu(
             step_id="init",
             menu_options=[
@@ -537,6 +665,29 @@ class AndroidManagementOptionsFlow(OptionsFlow):
                 "apply_policy",
             ],
         )
+
+    async def _fetch_live_policy(self) -> None:
+        """Fetch the current policy from the API and seed options with live values."""
+        policy_id = self._options.get("policy_id", "policy1")
+        try:
+            coordinator = self.config_entry.runtime_data
+            policy_data = await coordinator.client.async_get_policy(
+                self.hass, policy_id
+            )
+            live_opts = parse_policy_to_options(policy_data)
+            # Live values are the base; locally saved options override them
+            merged = {**live_opts, **self._options}
+            # Preserve the policy_id
+            merged["policy_id"] = policy_id
+            self._options = merged
+            _LOGGER.debug(
+                "Fetched live policy '%s' with %d fields", policy_id, len(live_opts)
+            )
+        except Exception:
+            _LOGGER.debug(
+                "Could not fetch live policy '%s'; using saved options only",
+                policy_id,
+            )
 
     # ── Kiosk App ────────────────────────────────────────────────────────
 

@@ -34,12 +34,22 @@ set_kiosk_policy:
       selector:
         text:
     package_name:
-      name: Package Name
-      description: The Android package name of the kiosk app.
+      name: Primary Kiosk App
+      description: The Android package name of the primary kiosk app.
       required: true
       example: "com.example.kioskapp"
       selector:
         text:
+    additional_packages:
+      name: Additional Apps
+      description: >-
+        Optional comma-separated or newline-separated list of additional package
+        names to force-install alongside the primary kiosk app.
+      required: false
+      example: "com.example.app1, com.example.app2"
+      selector:
+        text:
+          multiline: true
     install_type:
       name: Install Type
       description: How the app is installed (KIOSK, FORCE_INSTALLED, etc.).

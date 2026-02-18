@@ -54,16 +54,18 @@
       },
       "kiosk_app": {
         "title": "Kiosk App Settings",
-        "description": "Configure the app that runs in kiosk (lock task) mode.",
+        "description": "Configure the primary kiosk app and any additional apps to install.",
         "data": {
-          "package_name": "Package name",
+          "package_name": "Primary kiosk app",
           "install_type": "Install type",
           "auto_update_mode": "Auto-update mode",
           "lock_task_allowed": "Lock task allowed",
-          "default_permission_policy": "Default permission policy"
+          "default_permission_policy": "Default permission policy",
+          "additional_packages": "Additional apps"
         },
         "data_description": {
-          "package_name": "Android package name (e.g. com.example.app)"
+          "package_name": "Android package name of the primary kiosk app (e.g. com.example.app)",
+          "additional_packages": "One package name per line. These apps are force-installed alongside the primary kiosk app."
         }
       },
       "kiosk_ui": {

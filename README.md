@@ -20,7 +20,9 @@ Manage your Android enterprise devices directly from Home Assistant using [Googl
 - **Device Commands**: Reboot, lock, reset password, factory reset (wipe), and unenroll devices with a single button press.
 - **Online/Offline Tracking**: Device tracker entities map `ACTIVE` devices to online and all other states to offline.
 - **Enrollment QR Code**: Generate a fresh 24-hour enrollment token and render it as a QR code image — ready to scan on a new device.
-- **Policy Management**: Use the `set_policy` service to create or update Android Management policies from automations or scripts.
+- **Kiosk Policy Management**: Full Options flow UI for configuring kiosk policies — app settings, display, security, network, restrictions, and system settings. Fetches the live policy so fields always reflect what's currently set on the enterprise.
+- **Multi-App Kiosk Support**: Configure a primary kiosk app plus additional force-installed apps.
+- **Policy Management Service**: Use the `set_policy` or `set_kiosk_policy` services to manage policies from automations or scripts.
 - **Enrollment Token Service**: Use the `create_enrollment_token` service to programmatically generate enrollment tokens (fires an event with the full token data).
 - **Flexible Authentication**: Authenticate with a pasted service account JSON key or a file path on disk.
 
@@ -60,6 +62,25 @@ Manage your Android enterprise devices directly from Home Assistant using [Googl
     - **Provide file path on disk** — enter the absolute path to your service account JSON key file on the Home Assistant host.
 1. Click `Submit`. The integration will validate your credentials by making a test API call.
 
+## Options Flow (Policy Configuration)
+
+After setup, click **Configure** on the integration card to open the policy management UI. A menu lets you configure settings across 8 categories, then push them to the enterprise in one step.
+
+The Options flow **fetches the live policy** from the enterprise when opened, so all fields reflect what's currently active on your devices.
+
+### Categories
+
+| Category | Settings |
+|----------|----------|
+| **Kiosk App** | Primary kiosk app package, install type, auto-update mode, lock task, permissions, additional force-installed apps (one per line). |
+| **Kiosk UI** | Power button, system navigation, device settings access, status bar, system error warnings. |
+| **Display** | Screen brightness mode/level (0–255), screen timeout mode/duration. |
+| **Security & Privacy** | Developer settings, keyguard, camera, screen capture, location mode, untrusted apps policy, Google Play Protect, app verification. |
+| **Network & Connectivity** | Wi-Fi, Bluetooth, Bluetooth config, VPN, tethering, data roaming, mobile networks, cell broadcasts, network reset. |
+| **Device Restrictions** | Factory reset, install/uninstall apps, physical media, USB file transfer, volume, microphone, outgoing calls, SMS, add user, modify accounts, user icon, wallpaper, share location, credentials config. |
+| **System** | App auto-update policy, system update type, Play Store mode, status bar, auto time, skip first-use hints, max time to lock, stay on while plugged (AC/USB/Wireless), long/short support messages. |
+| **Apply Policy** | Enter a policy ID and push all configured settings to the enterprise. |
+
 ## Entities
 
 ### Sensors (per device)
@@ -95,12 +116,38 @@ The **Enrollment QR Code** entity generates a fresh enrollment token (valid for 
 
 ### `android_management_api.set_policy`
 
-Create or update an Android Management policy.
+Create or update an Android Management policy with raw JSON.
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `policy_id` | Yes | The policy ID to create or update (e.g. `policy1`). |
 | `policy_body` | No | JSON string representing the full policy body. |
+
+### `android_management_api.set_kiosk_policy`
+
+Create or update a kiosk policy with structured fields. Supports a primary kiosk app plus additional force-installed apps.
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `policy_id` | Yes | — | The policy ID to create or update. |
+| `package_name` | Yes | — | Primary kiosk app package name. |
+| `additional_packages` | No | — | Comma or newline-separated list of additional app package names (force-installed). |
+| `install_type` | No | `KIOSK` | Install type for the primary app. |
+| `auto_update_mode` | No | `AUTO_UPDATE_HIGH_PRIORITY` | Auto-update behavior for the primary app. |
+| `lock_task_allowed` | No | `true` | Whether the primary app can lock the device to kiosk mode. |
+| `default_permission_policy` | No | `GRANT` | Runtime permission policy for the primary app. |
+| `power_button_actions` | No | `POWER_BUTTON_BLOCKED` | Power button behavior in kiosk mode. |
+| `system_navigation` | No | `NAVIGATION_DISABLED` | Navigation bar behavior in kiosk mode. |
+| `device_settings` | No | `SETTINGS_ACCESS_BLOCKED` | Device settings access in kiosk mode. |
+| `status_bar` | No | `NOTIFICATIONS_AND_SYSTEM_INFO_DISABLED` | Status bar behavior in kiosk mode. |
+| `screen_brightness_mode` | No | `BRIGHTNESS_FIXED` | Brightness control mode. |
+| `screen_brightness` | No | `180` | Brightness level (0–255). |
+| `screen_timeout_mode` | No | `SCREEN_TIMEOUT_ENFORCED` | Screen timeout control mode. |
+| `screen_timeout` | No | `220s` | Screen timeout duration. |
+| `developer_settings` | No | `DEVELOPER_SETTINGS_ALLOWED` | Developer options access. |
+| `app_auto_update_policy` | No | `ALWAYS` | Global app auto-update policy. |
+| `keyguard_disabled` | No | `true` | Disable lock screen. |
+| `status_bar_disabled` | No | `true` | Disable status bar globally. |
 
 ### `android_management_api.create_enrollment_token`
 
@@ -110,16 +157,6 @@ Create a new enrollment token for device provisioning. Fires an `android_managem
 |-------|----------|-------------|
 | `policy_name` | No | Full policy resource name to bind to the token. |
 | `duration` | No | Token validity duration (default `86400s` = 24 hours). |
-
-## Contributing
-
-After cloning the repository, configure git to use the shared hooks directory:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-This enables the `commit-msg` hook which automatically strips AI co-author attribution from commits.
 
 ## Debug Logging
 

@@ -26,6 +26,7 @@ ATTR_POLICY_NAME = "policy_name"
 ATTR_DURATION = "duration"
 
 ATTR_PACKAGE_NAME = "package_name"
+ATTR_ADDITIONAL_PACKAGES = "additional_packages"
 ATTR_INSTALL_TYPE = "install_type"
 ATTR_AUTO_UPDATE_MODE = "auto_update_mode"
 ATTR_LOCK_TASK_ALLOWED = "lock_task_allowed"
@@ -54,6 +55,7 @@ SET_KIOSK_POLICY_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_POLICY_ID): cv.string,
         vol.Required(ATTR_PACKAGE_NAME): cv.string,
+        vol.Optional(ATTR_ADDITIONAL_PACKAGES): cv.string,
         vol.Optional(ATTR_INSTALL_TYPE, default="KIOSK"): cv.string,
         vol.Optional(ATTR_AUTO_UPDATE_MODE, default="AUTO_UPDATE_HIGH_PRIORITY"): cv.string,
         vol.Optional(ATTR_LOCK_TASK_ALLOWED, default=True): cv.boolean,
@@ -119,20 +121,33 @@ async def async_register_services(hass: HomeAssistant) -> None:
         coordinator = _get_coordinator(hass)
         policy_id: str = call.data[ATTR_POLICY_ID]
 
+        app_list: list[dict[str, Any]] = [
+            {
+                "packageName": call.data[ATTR_PACKAGE_NAME],
+                "installType": call.data.get(ATTR_INSTALL_TYPE, "KIOSK"),
+                "defaultPermissionPolicy": call.data.get(
+                    ATTR_DEFAULT_PERMISSION_POLICY, "GRANT"
+                ),
+                "lockTaskAllowed": call.data.get(ATTR_LOCK_TASK_ALLOWED, True),
+                "autoUpdateMode": call.data.get(
+                    ATTR_AUTO_UPDATE_MODE, "AUTO_UPDATE_HIGH_PRIORITY"
+                ),
+            }
+        ]
+        extra_raw: str | None = call.data.get(ATTR_ADDITIONAL_PACKAGES)
+        if extra_raw:
+            for line in extra_raw.replace(",", "\n").splitlines():
+                extra_pkg = line.strip()
+                if extra_pkg:
+                    app_list.append({
+                        "packageName": extra_pkg,
+                        "installType": "FORCE_INSTALLED",
+                        "defaultPermissionPolicy": "GRANT",
+                        "autoUpdateMode": "AUTO_UPDATE_HIGH_PRIORITY",
+                    })
+
         policy_body: dict[str, Any] = {
-            "applications": [
-                {
-                    "packageName": call.data[ATTR_PACKAGE_NAME],
-                    "installType": call.data.get(ATTR_INSTALL_TYPE, "KIOSK"),
-                    "defaultPermissionPolicy": call.data.get(
-                        ATTR_DEFAULT_PERMISSION_POLICY, "GRANT"
-                    ),
-                    "lockTaskAllowed": call.data.get(ATTR_LOCK_TASK_ALLOWED, True),
-                    "autoUpdateMode": call.data.get(
-                        ATTR_AUTO_UPDATE_MODE, "AUTO_UPDATE_HIGH_PRIORITY"
-                    ),
-                }
-            ],
+            "applications": app_list,
             "kioskCustomization": {
                 "powerButtonActions": call.data.get(
                     ATTR_POWER_BUTTON_ACTIONS, "POWER_BUTTON_BLOCKED"
