@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Strips Cursor/AI co-author and author attribution from commit messages.
+
+COMMIT_MSG_FILE="$1"
+
+# Remove any "Co-authored-by" lines that reference Cursor
+sed -i.bak -E '/^Co-authored-by:.*[Cc]ursor/d' "$COMMIT_MSG_FILE"
+
+# Remove any trailing blank lines left behind
+sed -i.bak -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$COMMIT_MSG_FILE"
+
+rm -f "${COMMIT_MSG_FILE}.bak"

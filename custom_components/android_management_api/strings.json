@@ -35,5 +35,145 @@
     "abort": {
       "already_configured": "This enterprise is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Android Management Policy Settings",
+        "description": "Choose a category to configure, then select Apply Policy to push your settings to the enterprise.",
+        "menu_options": {
+          "kiosk_app": "Kiosk App",
+          "kiosk_ui": "Kiosk UI",
+          "display": "Display",
+          "security": "Security & Privacy",
+          "network": "Network & Connectivity",
+          "restrictions": "Device Restrictions",
+          "system": "System",
+          "apply_policy": "Apply Policy"
+        }
+      },
+      "kiosk_app": {
+        "title": "Kiosk App Settings",
+        "description": "Configure the app that runs in kiosk (lock task) mode.",
+        "data": {
+          "package_name": "Package name",
+          "install_type": "Install type",
+          "auto_update_mode": "Auto-update mode",
+          "lock_task_allowed": "Lock task allowed",
+          "default_permission_policy": "Default permission policy"
+        },
+        "data_description": {
+          "package_name": "Android package name (e.g. com.example.app)"
+        }
+      },
+      "kiosk_ui": {
+        "title": "Kiosk UI Customization",
+        "description": "Control which UI elements are available in kiosk mode.",
+        "data": {
+          "power_button_actions": "Power button",
+          "system_navigation": "System navigation",
+          "device_settings": "Device settings access",
+          "kiosk_status_bar": "Status bar",
+          "system_error_warnings": "System error warnings"
+        }
+      },
+      "display": {
+        "title": "Display Settings",
+        "description": "Configure screen brightness and timeout behavior.",
+        "data": {
+          "screen_brightness_mode": "Brightness mode",
+          "screen_brightness": "Brightness level (0-255)",
+          "screen_timeout_mode": "Timeout mode",
+          "screen_timeout": "Timeout duration"
+        },
+        "data_description": {
+          "screen_timeout": "Duration string, e.g. 220s, 60s, 0s (never)"
+        }
+      },
+      "security": {
+        "title": "Security & Privacy",
+        "description": "Configure security overrides, location, and app verification settings.",
+        "data": {
+          "developer_settings": "Developer settings",
+          "keyguard_disabled": "Keyguard (lock screen) disabled",
+          "camera_disabled": "Camera disabled",
+          "screen_capture_disabled": "Screen capture disabled",
+          "location_mode": "Location mode",
+          "untrusted_apps_policy": "Untrusted apps policy",
+          "google_play_protect": "Google Play Protect",
+          "ensure_verify_apps_enabled": "Enforce app verification"
+        }
+      },
+      "network": {
+        "title": "Network & Connectivity",
+        "description": "Enable or disable network-related configuration options.",
+        "data": {
+          "wifi_config_disabled": "Wi-Fi config disabled",
+          "bluetooth_disabled": "Bluetooth disabled",
+          "bluetooth_config_disabled": "Bluetooth config disabled",
+          "vpn_config_disabled": "VPN config disabled",
+          "tethering_config_disabled": "Tethering config disabled",
+          "data_roaming_disabled": "Data roaming disabled",
+          "mobile_networks_config_disabled": "Mobile networks config disabled",
+          "cell_broadcasts_config_disabled": "Cell broadcasts config disabled",
+          "network_reset_disabled": "Network reset disabled"
+        }
+      },
+      "restrictions": {
+        "title": "Device Restrictions",
+        "description": "Control which device features and actions are allowed.",
+        "data": {
+          "factory_reset_disabled": "Factory reset disabled",
+          "install_apps_disabled": "Install apps disabled",
+          "uninstall_apps_disabled": "Uninstall apps disabled",
+          "mount_physical_media_disabled": "Mount physical media disabled",
+          "usb_file_transfer_disabled": "USB file transfer disabled",
+          "adjust_volume_disabled": "Adjust volume disabled",
+          "unmute_microphone_disabled": "Unmute microphone disabled",
+          "outgoing_calls_disabled": "Outgoing calls disabled",
+          "sms_disabled": "SMS disabled",
+          "add_user_disabled": "Add user disabled",
+          "modify_accounts_disabled": "Modify accounts disabled",
+          "set_user_icon_disabled": "Set user icon disabled",
+          "set_wallpaper_disabled": "Set wallpaper disabled",
+          "share_location_disabled": "Share location disabled",
+          "credentials_config_disabled": "Credentials config disabled"
+        }
+      },
+      "system": {
+        "title": "System Settings",
+        "description": "Configure global system behavior, updates, and support messages.",
+        "data": {
+          "app_auto_update_policy": "App auto-update policy",
+          "system_update_type": "System update type",
+          "play_store_mode": "Play Store mode",
+          "status_bar_disabled": "Status bar disabled",
+          "auto_time_required": "Auto time required",
+          "skip_first_use_hints_enabled": "Skip first-use hints",
+          "maximum_time_to_lock": "Maximum time to lock (ms)",
+          "stay_on_plugged_modes": "Stay on while plugged",
+          "long_support_message": "Long support message",
+          "short_support_message": "Short support message"
+        },
+        "data_description": {
+          "maximum_time_to_lock": "Maximum time in milliseconds before the screen locks. 0 = no restriction.",
+          "long_support_message": "Shown on the device admin settings screen.",
+          "short_support_message": "Shown in various system dialogs."
+        }
+      },
+      "apply_policy": {
+        "title": "Apply Policy",
+        "description": "Push the configured settings to the enterprise as a policy. This will overwrite the existing policy with the given ID.",
+        "data": {
+          "policy_id": "Policy ID"
+        },
+        "data_description": {
+          "policy_id": "The policy identifier, e.g. policy1"
+        }
+      }
+    },
+    "error": {
+      "apply_failed": "Failed to apply the policy. Check logs for details."
+    }
   }
 }

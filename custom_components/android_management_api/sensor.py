@@ -40,6 +40,7 @@ def _nested_get(data: dict[str, Any], *keys: str) -> Any:
 
 
 SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
+    # --- Top-level fields ---
     AndroidManagementSensorDescription(
         key="state",
         translation_key="device_state",
@@ -71,6 +72,24 @@ SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
         else None,
     ),
     AndroidManagementSensorDescription(
+        key="applied_policy_version",
+        translation_key="applied_policy_version",
+        name="Applied Policy Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: str(d.get("appliedPolicyVersion"))
+        if d.get("appliedPolicyVersion")
+        else None,
+    ),
+    AndroidManagementSensorDescription(
+        key="policy_compliant",
+        translation_key="policy_compliant",
+        name="Policy Compliant",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: str(d.get("policyCompliant"))
+        if d.get("policyCompliant") is not None
+        else None,
+    ),
+    AndroidManagementSensorDescription(
         key="api_level",
         translation_key="api_level",
         name="API Level",
@@ -83,6 +102,133 @@ SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
         name="Enrollment Time",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.get("enrollmentTime"),
+    ),
+    AndroidManagementSensorDescription(
+        key="last_policy_sync_time",
+        translation_key="last_policy_sync_time",
+        name="Last Policy Sync",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("lastPolicySyncTime"),
+    ),
+    AndroidManagementSensorDescription(
+        key="last_status_report_time",
+        translation_key="last_status_report_time",
+        name="Last Status Report",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("lastStatusReportTime"),
+    ),
+    # --- Software info ---
+    AndroidManagementSensorDescription(
+        key="android_version",
+        translation_key="android_version",
+        name="Android Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "androidVersion"),
+    ),
+    AndroidManagementSensorDescription(
+        key="security_patch_level",
+        translation_key="security_patch_level",
+        name="Security Patch Level",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "securityPatchLevel"),
+    ),
+    AndroidManagementSensorDescription(
+        key="android_build_number",
+        translation_key="android_build_number",
+        name="Build Number",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "androidBuildNumber"),
+    ),
+    AndroidManagementSensorDescription(
+        key="device_kernel_version",
+        translation_key="device_kernel_version",
+        name="Kernel Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "deviceKernelVersion"),
+    ),
+    AndroidManagementSensorDescription(
+        key="bootloader_version",
+        translation_key="bootloader_version",
+        name="Bootloader Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "bootloaderVersion"),
+    ),
+    AndroidManagementSensorDescription(
+        key="device_policy_version",
+        translation_key="device_policy_version",
+        name="Device Policy Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(
+            d, "softwareInfo", "androidDevicePolicyVersionName"
+        ),
+    ),
+    AndroidManagementSensorDescription(
+        key="primary_language",
+        translation_key="primary_language",
+        name="Primary Language",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "softwareInfo", "primaryLanguageCode"),
+    ),
+    AndroidManagementSensorDescription(
+        key="system_update_status",
+        translation_key="system_update_status",
+        name="System Update Status",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(
+            d, "softwareInfo", "systemUpdateInfo", "updateStatus"
+        ),
+    ),
+    # --- Hardware info ---
+    AndroidManagementSensorDescription(
+        key="brand",
+        translation_key="brand",
+        name="Brand",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "hardwareInfo", "brand"),
+    ),
+    AndroidManagementSensorDescription(
+        key="hardware",
+        translation_key="hardware",
+        name="Hardware",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "hardwareInfo", "hardware"),
+    ),
+    AndroidManagementSensorDescription(
+        key="baseband_version",
+        translation_key="baseband_version",
+        name="Baseband Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "hardwareInfo", "deviceBasebandVersion"),
+    ),
+    # --- Network info ---
+    AndroidManagementSensorDescription(
+        key="imei",
+        translation_key="imei",
+        name="IMEI",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "networkInfo", "imei"),
+    ),
+    AndroidManagementSensorDescription(
+        key="wifi_mac_address",
+        translation_key="wifi_mac_address",
+        name="WiFi MAC Address",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "networkInfo", "wifiMacAddress"),
+    ),
+    AndroidManagementSensorDescription(
+        key="network_operator",
+        translation_key="network_operator",
+        name="Network Operator",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "networkInfo", "networkOperatorName"),
+    ),
+    # --- Security posture ---
+    AndroidManagementSensorDescription(
+        key="security_posture",
+        translation_key="security_posture",
+        name="Security Posture",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _nested_get(d, "securityPosture", "devicePosture"),
     ),
 )
 

@@ -20,6 +20,184 @@ set_policy:
         text:
           multiline: true
 
+set_kiosk_policy:
+  name: Set Kiosk Policy
+  description: >-
+    Create or update a dedicated kiosk device policy. Configures a single app in
+    kiosk (lock task) mode with display, navigation, and security settings.
+  fields:
+    policy_id:
+      name: Policy ID
+      description: The ID of the policy to create or update.
+      required: true
+      example: "policy1"
+      selector:
+        text:
+    package_name:
+      name: Package Name
+      description: The Android package name of the kiosk app.
+      required: true
+      example: "com.example.kioskapp"
+      selector:
+        text:
+    install_type:
+      name: Install Type
+      description: How the app is installed (KIOSK, FORCE_INSTALLED, etc.).
+      required: false
+      default: "KIOSK"
+      selector:
+        select:
+          options:
+            - "KIOSK"
+            - "FORCE_INSTALLED"
+            - "PREINSTALLED"
+            - "AVAILABLE"
+    auto_update_mode:
+      name: Auto Update Mode
+      description: App auto-update behavior.
+      required: false
+      default: "AUTO_UPDATE_HIGH_PRIORITY"
+      selector:
+        select:
+          options:
+            - "AUTO_UPDATE_HIGH_PRIORITY"
+            - "AUTO_UPDATE_POSTPONED"
+            - "AUTO_UPDATE_DEFAULT"
+    lock_task_allowed:
+      name: Lock Task Allowed
+      description: Whether the app can lock the device to kiosk mode.
+      required: false
+      default: true
+      selector:
+        boolean:
+    default_permission_policy:
+      name: Default Permission Policy
+      description: Default runtime permission grant policy for the app.
+      required: false
+      default: "GRANT"
+      selector:
+        select:
+          options:
+            - "GRANT"
+            - "PROMPT"
+            - "DENY"
+    power_button_actions:
+      name: Power Button Actions
+      description: Power button behavior in kiosk mode.
+      required: false
+      default: "POWER_BUTTON_BLOCKED"
+      selector:
+        select:
+          options:
+            - "POWER_BUTTON_BLOCKED"
+            - "POWER_BUTTON_AVAILABLE"
+    system_navigation:
+      name: System Navigation
+      description: System navigation bar behavior in kiosk mode.
+      required: false
+      default: "NAVIGATION_DISABLED"
+      selector:
+        select:
+          options:
+            - "NAVIGATION_DISABLED"
+            - "NAVIGATION_ENABLED"
+            - "HOME_BUTTON_ONLY"
+    device_settings:
+      name: Device Settings Access
+      description: Whether the user can access device settings in kiosk mode.
+      required: false
+      default: "SETTINGS_ACCESS_BLOCKED"
+      selector:
+        select:
+          options:
+            - "SETTINGS_ACCESS_BLOCKED"
+            - "SETTINGS_ACCESS_ALLOWED"
+    status_bar:
+      name: Status Bar (Kiosk)
+      description: Status bar behavior in kiosk mode.
+      required: false
+      default: "NOTIFICATIONS_AND_SYSTEM_INFO_DISABLED"
+      selector:
+        select:
+          options:
+            - "NOTIFICATIONS_AND_SYSTEM_INFO_DISABLED"
+            - "NOTIFICATIONS_AND_SYSTEM_INFO_ENABLED"
+            - "SYSTEM_INFO_ONLY"
+    screen_brightness_mode:
+      name: Screen Brightness Mode
+      description: Whether screen brightness is fixed or user-adjustable.
+      required: false
+      default: "BRIGHTNESS_FIXED"
+      selector:
+        select:
+          options:
+            - "BRIGHTNESS_FIXED"
+            - "BRIGHTNESS_USER_CHOICE"
+            - "BRIGHTNESS_AUTOMATIC"
+    screen_brightness:
+      name: Screen Brightness
+      description: Fixed brightness level (0–255).
+      required: false
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 1
+    screen_timeout_mode:
+      name: Screen Timeout Mode
+      description: Whether screen timeout is enforced or user-configurable.
+      required: false
+      default: "SCREEN_TIMEOUT_ENFORCED"
+      selector:
+        select:
+          options:
+            - "SCREEN_TIMEOUT_ENFORCED"
+            - "SCREEN_TIMEOUT_USER_CHOICE"
+    screen_timeout:
+      name: Screen Timeout
+      description: Screen timeout duration (e.g. "220s", "60s", "0s" for never).
+      required: false
+      default: "220s"
+      selector:
+        text:
+    developer_settings:
+      name: Developer Settings
+      description: Whether developer options are accessible.
+      required: false
+      default: "DEVELOPER_SETTINGS_ALLOWED"
+      selector:
+        select:
+          options:
+            - "DEVELOPER_SETTINGS_ALLOWED"
+            - "DEVELOPER_SETTINGS_DISABLED"
+    app_auto_update_policy:
+      name: App Auto Update Policy
+      description: Global app auto-update policy.
+      required: false
+      default: "ALWAYS"
+      selector:
+        select:
+          options:
+            - "ALWAYS"
+            - "NEVER"
+            - "WIFI_ONLY"
+            - "CHOICE_TO_THE_USER"
+    keyguard_disabled:
+      name: Keyguard Disabled
+      description: Whether the lock screen (keyguard) is disabled.
+      required: false
+      default: true
+      selector:
+        boolean:
+    status_bar_disabled:
+      name: Status Bar Disabled
+      description: Whether the status bar is globally disabled.
+      required: false
+      default: true
+      selector:
+        boolean:
+
 create_enrollment_token:
   name: Create Enrollment Token
   description: Create a new enrollment token for device provisioning.

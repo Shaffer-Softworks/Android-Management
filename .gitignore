@@ -1,0 +1,19 @@
+# Cursor IDE
+.cursor/
+.cursorignore
+.cursorindexingignore
+.cursorrulesignore
+
+# General IDE / editor files
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/

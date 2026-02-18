@@ -111,6 +111,16 @@ Create a new enrollment token for device provisioning. Fires an `android_managem
 | `policy_name` | No | Full policy resource name to bind to the token. |
 | `duration` | No | Token validity duration (default `86400s` = 24 hours). |
 
+## Contributing
+
+After cloning the repository, configure git to use the shared hooks directory:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This enables the `commit-msg` hook which automatically strips AI co-author attribution from commits.
+
 ## Debug Logging
 
 To enable debug logging for the integration, add the following to your `configuration.yaml`:
