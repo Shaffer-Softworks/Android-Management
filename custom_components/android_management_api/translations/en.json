@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Android Management API",
+        "description": "Enter your enterprise name and choose how to provide service account credentials.",
+        "data": {
+          "enterprise_name": "Enterprise name",
+          "auth_method": "Authentication method"
+        },
+        "data_description": {
+          "enterprise_name": "The full enterprise resource name, e.g. enterprises/LC00t1kz5a"
+        }
+      },
+      "credentials_json": {
+        "title": "Service Account JSON",
+        "description": "Paste the full contents of your Google service account JSON key file.",
+        "data": {
+          "service_account_json": "Service account JSON"
+        }
+      },
+      "credentials_file": {
+        "title": "Service Account File",
+        "description": "Provide the absolute path to the service account JSON key file on disk.",
+        "data": {
+          "file_path": "File path"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Invalid JSON. Please paste valid service account key contents.",
+      "cannot_connect": "Failed to connect to the Android Management API. Check your credentials and enterprise name.",
+      "file_not_found": "The specified file was not found."
+    },
+    "abort": {
+      "already_configured": "This enterprise is already configured."
+    }
+  }
+}

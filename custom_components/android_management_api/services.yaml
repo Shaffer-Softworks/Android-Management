@@ -1,0 +1,43 @@
+set_policy:
+  name: Set Policy
+  description: Create or update an Android Management policy.
+  fields:
+    policy_id:
+      name: Policy ID
+      description: The ID of the policy to create or update (e.g. "policy1").
+      required: true
+      example: "policy1"
+      selector:
+        text:
+    policy_body:
+      name: Policy Body (JSON)
+      description: >-
+        Optional JSON string representing the full policy body. If omitted, an
+        empty policy is patched.
+      required: false
+      example: '{"applications": [{"packageName": "com.example.app", "installType": "FORCE_INSTALLED"}]}'
+      selector:
+        text:
+          multiline: true
+
+create_enrollment_token:
+  name: Create Enrollment Token
+  description: Create a new enrollment token for device provisioning.
+  fields:
+    policy_name:
+      name: Policy Name
+      description: >-
+        Optional full policy resource name to bind to the token
+        (e.g. "enterprises/LC00t1kz5a/policies/policy1").
+      required: false
+      example: "enterprises/LC00t1kz5a/policies/policy1"
+      selector:
+        text:
+    duration:
+      name: Duration
+      description: Token validity duration (default 86400s = 24 hours).
+      required: false
+      default: "86400s"
+      example: "86400s"
+      selector:
+        text:
