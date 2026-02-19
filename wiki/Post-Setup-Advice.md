@@ -30,15 +30,15 @@ Tips and best practices after the Android Management API integration is configur
 
 ## Using services
 
-- **Developer Tools → Services**: Call `android_management_api.set_policy`, `android_management_api.set_kiosk_policy`, and `android_management_api.create_enrollment_token` with the parameters documented in the [README](../README.md#services).
-- **Automations and scripts**: Use the same service names and parameters to manage policies and tokens from automations or scripts.
+- **Developer Tools → Services**: Call `android_management_api.set_policy`, `android_management_api.set_kiosk_policy`, `android_management_api.create_enrollment_token`, and device-level services (`clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`) with the parameters documented in the [README](../README.md#services).
+- **Automations and scripts**: Use the same service names and parameters to manage policies, tokens, and devices from automations or scripts.
 - **Events**: After `create_enrollment_token`, listen for `android_management_api_enrollment_token_created` to get the token payload.
 
 ---
 
 ## Buttons and device state
 
-- Per-device **buttons** (Reboot, Lock, Reset Password, Factory Reset, Unenroll) send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply.
+- Per-device **buttons** (Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership) send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply.
 - **Device tracker** entities map `ACTIVE` to `home` (online) and other states to `not_home` (offline).
 
 ---

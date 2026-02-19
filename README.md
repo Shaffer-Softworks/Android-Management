@@ -9,15 +9,15 @@ Manage your Android enterprise devices directly from Home Assistant using [Googl
 
 | Platform | Description |
 |----------|-------------|
-| `sensor` | Per-device diagnostic sensors: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time. |
-| `button` | Per-device command buttons: Reboot, Lock, Reset Password, Factory Reset, Unenroll. |
+| `sensor` | Per-device diagnostic sensors: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count. |
+| `button` | Per-device command buttons: Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership. |
 | `device_tracker` | Per-device online/offline tracker based on device state. |
 | `image` | Enterprise-level enrollment QR code generated on demand. |
 
 ### Key Features
 
 - **Full Device Inventory**: All managed devices are automatically discovered and represented as Home Assistant devices with manufacturer, model, and serial number.
-- **Device Commands**: Reboot, lock, reset password, factory reset (wipe), and unenroll devices with a single button press.
+- **Device Commands**: Reboot, lock, reset password, factory reset (wipe), unenroll, and relinquish ownership with a single button press; plus device-level services for lost mode, app data clear, eSIM, and more.
 - **Online/Offline Tracking**: Device tracker entities map `ACTIVE` devices to online and all other states to offline.
 - **Enrollment QR Code**: Generate a fresh 24-hour enrollment token and render it as a QR code image — ready to scan on a new device.
 - **Kiosk Policy Management**: Full Options flow UI for configuring kiosk policies — app settings, display, security, network, restrictions, and system settings. Fetches the live policy so fields always reflect what's currently set on the enterprise.
@@ -68,7 +68,7 @@ Manage your Android enterprise devices directly from Home Assistant using [Googl
 
 ## Options Flow (Policy Configuration)
 
-After setup, click **Configure** on the integration card to open the policy management UI. A menu lets you configure settings across 8 categories, then push them to the enterprise in one step.
+After setup, click **Configure** on the integration card to open the policy management UI. A menu lets you configure settings across 9 categories, then push them to the enterprise in one step.
 
 The Options flow **fetches the live policy** from the enterprise when opened, so all fields reflect what's currently active on your devices.
 
@@ -83,6 +83,7 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 | **Network & Connectivity** | Wi-Fi, Bluetooth, Bluetooth config, VPN, tethering, data roaming, mobile networks, cell broadcasts, network reset. |
 | **Device Restrictions** | Factory reset, install/uninstall apps, physical media, USB file transfer, volume, microphone, outgoing calls, SMS, add user, modify accounts, user icon, wallpaper, share location, credentials config. |
 | **System** | App auto-update policy, system update type, Play Store mode, status bar, auto time, skip first-use hints, max time to lock, stay on while plugged (AC/USB/Wireless), long/short support messages. |
+| **Device Reporting** | Control which diagnostic data devices report (via `statusReportingSettings`): software info (Android version, build, kernel, security patch), network info (IMEI, WiFi MAC, operator), memory info, display info. Enabling these populates sensors that may show "Unknown" when disabled. |
 | **Apply Policy** | Enter a policy ID and push all configured settings to the enterprise. |
 
 ## Entities
@@ -91,12 +92,17 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 
 | Entity | Description |
 |--------|-------------|
-| **State** | Device state: `ACTIVE`, `DISABLED`, `DELETED`, `PROVISIONING`. |
+| **State** | Device state: `ACTIVE`, `DISABLED`, `DELETED`, `PROVISIONING`, `LOST`. |
 | **Management Mode** | `DEVICE_OWNER`, `PROFILE_OWNER`, etc. |
 | **Ownership** | `COMPANY_OWNED` or `PERSONALLY_OWNED`. |
 | **Policy Name** | The currently applied policy ID. |
 | **API Level** | Android API level of the device. |
 | **Enrollment Time** | Timestamp of when the device was enrolled. |
+| **Total RAM (MB)** | Total device RAM in MB (requires `memoryInfoEnabled` in policy). |
+| **Total Internal/External Storage (MB)** | Storage in MB (requires `memoryInfoEnabled` in policy). |
+| **Non-Compliance Count** | Number of policy non-compliance issues. |
+| **Non-Compliance Details** | Details on policy non-compliance. |
+| **Display Count** | Number of displays (requires `displayInfoEnabled` in policy). |
 
 ### Buttons (per device)
 
@@ -107,6 +113,7 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 | **Reset Password** | Sends a `RESET_PASSWORD` command. |
 | **Factory Reset** | Wipes the device and removes it from the enterprise. |
 | **Unenroll** | Removes the device from enterprise management. |
+| **Relinquish Ownership** | Removes work profile and policies from company-owned device for personal use (Android 8+ COPE). |
 
 ### Device Tracker (per device)
 
@@ -161,6 +168,105 @@ Create a new enrollment token for device provisioning. Fires an `android_managem
 |-------|----------|-------------|
 | `policy_name` | No | Full policy resource name to bind to the token. |
 | `duration` | No | Token validity duration (default `86400s` = 24 hours). |
+
+### `android_management_api.clear_app_data`
+
+Clear app data for specified packages on a device. (Android 9+)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name (e.g. `enterprises/XXX/devices/YYY`). |
+| `package_names` | Yes | List of app package names (e.g. `com.example.app`). Comma or newline-separated. |
+
+### `android_management_api.start_lost_mode`
+
+Put a device into lost mode. At least one of the message fields is required. (Fully managed or COPE devices)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `lost_message` | No | Message displayed on lock screen. |
+| `lost_phone_number` | No | Phone number for call owner button. |
+| `lost_email` | No | Email displayed on lock screen. |
+| `lost_street_address` | No | Street address displayed. |
+| `lost_organization` | No | Organization name displayed. |
+
+### `android_management_api.stop_lost_mode`
+
+Take a device out of lost mode.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+
+### `android_management_api.patch_device`
+
+Update device state, policy, or disabled reason.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `state` | No | Set to `ACTIVE` or `DISABLED`. |
+| `policy_id` | No | Policy ID to apply (e.g. `policy1`). |
+| `disabled_reason` | No | Message shown when device is disabled. |
+
+### `android_management_api.wipe`
+
+Wipe a device via command (alternative to Factory Reset button).
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `wipe_reason` | No | User-facing reason for wipe. |
+| `wipe_data_flags` | No | Comma-separated flags (e.g. `WIPE_EXTERNAL_STORAGE`). |
+
+### `android_management_api.add_esim`
+
+Add an eSIM profile to a device. (Android 15+)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `activation_code` | Yes | eSIM activation code. |
+| `activation_state` | No | `ACTIVATED`, `NOT_ACTIVATED`, or `ACTIVATION_STATE_UNSPECIFIED`. Default: `ACTIVATED`. |
+
+### `android_management_api.remove_esim`
+
+Remove an eSIM profile from a device. (Android 15+)
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `icc_id` | Yes | ICC ID of the eSIM profile to remove. |
+
+### `android_management_api.request_device_info`
+
+Request device information (e.g. EID for eSIM). User must approve on device.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `device_info_type` | No | `EID` or `DEVICE_INFO_UNSPECIFIED`. Default: `EID`. |
+
+### `android_management_api.issue_command`
+
+Send a raw command to a device.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `command_type` | Yes | Command type (e.g. `REBOOT`, `LOCK`, `CLEAR_APP_DATA`). |
+| `command_params` | No | Additional params as dict or JSON string (camelCase keys). |
+
+### `android_management_api.reset_password`
+
+Reset device password with optional new password and flags.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `device_id` | Yes | Device ID or full resource name. |
+| `new_password` | No | New password (min 6 chars if numeric on Android 14). |
+| `reset_password_flags` | No | Comma-separated: `REQUIRE_ENTRY`, `DO_NOT_ASK_CREDENTIALS_ON_BOOT`, `LOCK_NOW`. |
 
 ## Debug Logging
 

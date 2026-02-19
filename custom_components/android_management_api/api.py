@@ -113,6 +113,41 @@ class AndroidManagementAPIClient:
             .execute()
         )
 
+    async def async_patch_device(
+        self,
+        hass,
+        device_name: str,
+        state: str | None = None,
+        policy_name: str | None = None,
+        disabled_reason: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Patch a device (state, policy, disabled reason)."""
+        return await hass.async_add_executor_job(
+            self._patch_device, device_name, state, policy_name, disabled_reason
+        )
+
+    def _patch_device(
+        self,
+        device_name: str,
+        state: str | None = None,
+        policy_name: str | None = None,
+        disabled_reason: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Patch a device (synchronous)."""
+        body: dict[str, Any] = {}
+        if state is not None:
+            body["state"] = state
+        if policy_name is not None:
+            body["policyName"] = policy_name
+        if disabled_reason is not None:
+            body["disabledReason"] = disabled_reason
+        return (
+            self._service.enterprises()
+            .devices()
+            .patch(name=device_name, body=body, updateMask=",".join(body.keys()))
+            .execute()
+        )
+
     async def async_delete_device(
         self,
         hass,
