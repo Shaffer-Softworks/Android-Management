@@ -12,5 +12,5 @@
     "google-auth==2.37.0",
     "qrcode==8.0"
   ],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
