@@ -1,15 +1,15 @@
 {
   "entity": {
     "sensor": {
-      "android_management_api__total_ram_mb": {"name": "Total RAM (MB)"},
-      "android_management_api__total_internal_storage_mb": {"name": "Total Internal Storage (MB)"},
-      "android_management_api__total_external_storage_mb": {"name": "Total External Storage (MB)"},
-      "android_management_api__non_compliance_count": {"name": "Non-Compliance Count"},
-      "android_management_api__non_compliance_details": {"name": "Non-Compliance Details"},
-      "android_management_api__display_count": {"name": "Display Count"}
+      "total_ram_mb": {"name": "Total RAM (MB)"},
+      "total_internal_storage_mb": {"name": "Total Internal Storage (MB)"},
+      "total_external_storage_mb": {"name": "Total External Storage (MB)"},
+      "non_compliance_count": {"name": "Non-Compliance Count"},
+      "non_compliance_details": {"name": "Non-Compliance Details"},
+      "display_count": {"name": "Display Count"}
     },
     "button": {
-      "android_management_api__relinquish_ownership": {"name": "Relinquish Ownership"}
+      "relinquish_ownership": {"name": "Relinquish Ownership"}
     }
   },
   "config": {
