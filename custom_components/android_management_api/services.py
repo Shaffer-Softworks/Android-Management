@@ -462,10 +462,11 @@ async def async_register_services(hass: HomeAssistant) -> None:
     async def handle_request_device_info(call: ServiceCall) -> None:
         """Handle request_device_info service call."""
         coordinator, device_name = _require_device(call.data[ATTR_DEVICE_ID])
+        device_info_type = call.data.get(ATTR_DEVICE_INFO_TYPE, "EID")
         await coordinator.client.async_issue_command(
             hass, device_name, "REQUEST_DEVICE_INFO",
             requestDeviceInfoParams={
-                "deviceInfo": call.data.get(ATTR_DEVICE_INFO_TYPE, "EID"),
+                "deviceInfo": [device_info_type],
             }
         )
         await coordinator.async_request_refresh()
