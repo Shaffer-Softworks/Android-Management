@@ -24,6 +24,7 @@ You’ll see a menu with several categories. Configure the ones you need, then u
 | **Network & Connectivity** | Wi-Fi, Bluetooth, Bluetooth config, VPN, tethering, data roaming, mobile networks, cell broadcasts, network reset. |
 | **Device Restrictions** | Factory reset, install/uninstall apps, physical media, USB file transfer, volume, microphone, outgoing calls, SMS, add user, modify accounts, user icon, wallpaper, share location, credentials config. |
 | **System** | App auto-update policy, system update type, Play Store mode, status bar, auto time, skip first-use hints, max time to lock, stay on while plugged (AC/USB/Wireless), long/short support messages. |
+| **Device Reporting** | Control which diagnostic data devices report (via `statusReportingSettings`): software info (Android version, build, kernel, security patch), network info (IMEI, WiFi MAC, operator), memory info, display info. Enabling these populates sensors that may show "Unknown" when disabled. |
 | **Apply Policy** | Enter the **policy ID** (e.g. `policy1`) and push all configured settings to the enterprise in one step. |
 
 ---
@@ -49,5 +50,6 @@ You’ll see a menu with several categories. Configure the ones you need, then u
 - **Services** – Use from automations, scripts, or Developer Tools:
   - `android_management_api.set_policy` – Raw JSON policy body.
   - `android_management_api.set_kiosk_policy` – Structured kiosk fields (primary app, additional apps, display, security, etc.).
+  - Device-level services: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
 
 See the [README – Services](../README.md#services) for the full list of service parameters.

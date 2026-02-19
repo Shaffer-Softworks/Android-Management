@@ -12,7 +12,7 @@ This wiki covers setup, configuration, and troubleshooting for the **Android Man
 | [Post-setup Advice](#post-setup-advice) | Best practices after the integration is configured |
 | [Debug Logging](#debug-logging) | Enable and use debug logs for troubleshooting |
 | [Configuration](Configuration) | Adding and configuring the integration in Home Assistant |
-| [Policy options](Policy-Options) | Options flow and kiosk policy categories |
+| [Policy options](Policy-Options) | Options flow, kiosk policy, and device reporting categories |
 
 ---
 
@@ -35,7 +35,7 @@ After the integration is set up:
 - **Policy ID**: Create or choose a policy in the [Android Management API console](https://support.google.com/work/android/answer/6174145) and use its ID in the integration’s Options flow when applying settings.
 - **Enrollment QR code**: The enrollment QR image entity creates a new 24-hour token each time it’s refreshed; use it for provisioning new devices.
 - **Device list**: The integration polls the API about every 60 seconds; new or removed devices appear after the next update.
-- **Services**: Use `set_policy`, `set_kiosk_policy`, and `create_enrollment_token` from Developer Tools → Services or from automations.
+- **Services**: Use `set_policy`, `set_kiosk_policy`, `create_enrollment_token`, and device-level services (`clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`) from Developer Tools → Services or from automations.
 
 More detail: **[Post-setup Advice](Post-Setup-Advice)**.
 

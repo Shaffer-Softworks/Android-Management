@@ -37,7 +37,7 @@ With `custom_components.android_management_api` set to `debug`, the integration 
 - API requests and responses (including errors)
 - Config and options flow steps
 - Coordinator updates and device list changes
-- Service calls (e.g. `set_policy`, `set_kiosk_policy`, `create_enrollment_token`)
+- Service calls (e.g. `set_policy`, `set_kiosk_policy`, `create_enrollment_token`, device-level services like `clear_app_data`, `start_lost_mode`, `patch_device`, etc.)
 - Authentication and validation steps
 
 Use this to verify credentials, policy IDs, enterprise names, and any error messages returned by the Android Management API.

@@ -249,6 +249,13 @@ SYSTEM_SCHEMA = {
     vol.Optional("short_support_message", default=""): _text(),
 }
 
+DEVICE_REPORTING_SCHEMA = {
+    vol.Optional("software_info_enabled", default=True): _bool,
+    vol.Optional("network_info_enabled", default=True): _bool,
+    vol.Optional("memory_info_enabled", default=True): _bool,
+    vol.Optional("display_info_enabled", default=True): _bool,
+}
+
 APPLY_POLICY_SCHEMA = {
     vol.Required("policy_id", default="policy1"): _text(),
 }
@@ -400,6 +407,17 @@ def parse_policy_to_options(policy: dict[str, Any]) -> dict[str, Any]:
     if short_msg.get("defaultMessage"):
         opts["short_support_message"] = short_msg["defaultMessage"]
 
+    # ── Device reporting (nested under statusReportingSettings) ──
+    reporting = policy.get("statusReportingSettings", {})
+    if "softwareInfoEnabled" in reporting:
+        opts["software_info_enabled"] = reporting["softwareInfoEnabled"]
+    if "networkInfoEnabled" in reporting:
+        opts["network_info_enabled"] = reporting["networkInfoEnabled"]
+    if "memoryInfoEnabled" in reporting:
+        opts["memory_info_enabled"] = reporting["memoryInfoEnabled"]
+    if "displayInfoEnabled" in reporting:
+        opts["display_info_enabled"] = reporting["displayInfoEnabled"]
+
     return opts
 
 
@@ -514,6 +532,19 @@ def build_policy_from_options(opts: dict[str, Any]) -> dict[str, Any]:
         policy["shortSupportMessage"] = {
             "defaultMessage": opts["short_support_message"]
         }
+
+    # ── Device reporting (nested under statusReportingSettings) ──
+    reporting: dict[str, Any] = {}
+    if "software_info_enabled" in opts:
+        reporting["softwareInfoEnabled"] = opts["software_info_enabled"]
+    if "network_info_enabled" in opts:
+        reporting["networkInfoEnabled"] = opts["network_info_enabled"]
+    if "memory_info_enabled" in opts:
+        reporting["memoryInfoEnabled"] = opts["memory_info_enabled"]
+    if "display_info_enabled" in opts:
+        reporting["displayInfoEnabled"] = opts["display_info_enabled"]
+    if reporting:
+        policy["statusReportingSettings"] = reporting
 
     return policy
 
@@ -662,6 +693,7 @@ class AndroidManagementOptionsFlow(OptionsFlow):
                 "network",
                 "restrictions",
                 "system",
+                "device_reporting",
                 "apply_policy",
             ],
         )
@@ -771,6 +803,22 @@ class AndroidManagementOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="restrictions",
             data_schema=_schema_with_suggestions(RESTRICTIONS_SCHEMA, self._options),
+        )
+
+    # ── Device Reporting ─────────────────────────────────────────────────
+
+    async def async_step_device_reporting(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_init()
+
+        return self.async_show_form(
+            step_id="device_reporting",
+            data_schema=_schema_with_suggestions(
+                DEVICE_REPORTING_SCHEMA, self._options
+            ),
         )
 
     # ── System ───────────────────────────────────────────────────────────

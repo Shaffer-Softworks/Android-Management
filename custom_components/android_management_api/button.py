@@ -67,6 +67,12 @@ async def _unenroll(
     await client.async_delete_device(hass, device_name)
 
 
+async def _relinquish_ownership(
+    hass: HomeAssistant, client: AndroidManagementAPIClient, device_name: str
+) -> None:
+    await client.async_issue_command(hass, device_name, "RELINQUISH_OWNERSHIP")
+
+
 BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
     AndroidManagementButtonDescription(
         key="reboot",
@@ -102,6 +108,13 @@ BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
         icon="mdi:cellphone-remove",
         entity_category=EntityCategory.CONFIG,
         press_fn=_unenroll,
+    ),
+    AndroidManagementButtonDescription(
+        key="relinquish_ownership",
+        name="Relinquish Ownership",
+        icon="mdi:account-off",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_relinquish_ownership,
     ),
 )
 

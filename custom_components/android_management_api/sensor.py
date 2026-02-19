@@ -230,6 +230,71 @@ SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: _nested_get(d, "securityPosture", "devicePosture"),
     ),
+    # --- Memory info (requires memoryInfoEnabled in policy) ---
+    AndroidManagementSensorDescription(
+        key="total_ram_mb",
+        translation_key="total_ram_mb",
+        name="Total RAM (MB)",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(int(_nested_get(d, "memoryInfo", "totalRam") or 0) // (1024 * 1024))
+            if _nested_get(d, "memoryInfo", "totalRam")
+            else None
+        ),
+    ),
+    AndroidManagementSensorDescription(
+        key="total_internal_storage_mb",
+        translation_key="total_internal_storage_mb",
+        name="Total Internal Storage (MB)",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(int(_nested_get(d, "memoryInfo", "totalInternalStorage") or 0) // (1024 * 1024))
+            if _nested_get(d, "memoryInfo", "totalInternalStorage")
+            else None
+        ),
+    ),
+    AndroidManagementSensorDescription(
+        key="total_external_storage_mb",
+        translation_key="total_external_storage_mb",
+        name="Total External Storage (MB)",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(int(_nested_get(d, "memoryInfo", "totalExternalStorage") or 0) // (1024 * 1024))
+            if _nested_get(d, "memoryInfo", "totalExternalStorage")
+            else None
+        ),
+    ),
+    # --- Non-compliance ---
+    AndroidManagementSensorDescription(
+        key="non_compliance_count",
+        translation_key="non_compliance_count",
+        name="Non-Compliance Count",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: str(len(d.get("nonComplianceDetails", [])))
+        if d.get("nonComplianceDetails")
+        else "0",
+    ),
+    AndroidManagementSensorDescription(
+        key="non_compliance_details",
+        translation_key="non_compliance_details",
+        name="Non-Compliance Details",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(d.get("nonComplianceDetails"))
+            if d.get("nonComplianceDetails")
+            else None
+        ),
+    ),
+    # --- Display info (requires displayInfoEnabled in policy) ---
+    AndroidManagementSensorDescription(
+        key="display_count",
+        translation_key="display_count",
+        name="Display Count",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: str(len(d.get("displays", [])))
+        if d.get("displays") is not None
+        else None,
+    ),
 )
 
 

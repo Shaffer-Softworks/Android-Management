@@ -1,4 +1,17 @@
 {
+  "entity": {
+    "sensor": {
+      "android_management_api__total_ram_mb": {"name": "Total RAM (MB)"},
+      "android_management_api__total_internal_storage_mb": {"name": "Total Internal Storage (MB)"},
+      "android_management_api__total_external_storage_mb": {"name": "Total External Storage (MB)"},
+      "android_management_api__non_compliance_count": {"name": "Non-Compliance Count"},
+      "android_management_api__non_compliance_details": {"name": "Non-Compliance Details"},
+      "android_management_api__display_count": {"name": "Display Count"}
+    },
+    "button": {
+      "android_management_api__relinquish_ownership": {"name": "Relinquish Ownership"}
+    }
+  },
   "config": {
     "step": {
       "user": {
@@ -49,6 +62,7 @@
           "network": "Network & Connectivity",
           "restrictions": "Device Restrictions",
           "system": "System",
+          "device_reporting": "Device Reporting",
           "apply_policy": "Apply Policy"
         }
       },
@@ -161,6 +175,22 @@
           "maximum_time_to_lock": "Maximum time in milliseconds before the screen locks. 0 = no restriction.",
           "long_support_message": "Shown on the device admin settings screen.",
           "short_support_message": "Shown in various system dialogs."
+        }
+      },
+      "device_reporting": {
+        "title": "Device Reporting",
+        "description": "Control which diagnostic data the device reports. Enable these to populate Android Version, Build Number, IMEI, WiFi MAC, and other sensors that may show Unknown when disabled.",
+        "data": {
+          "software_info_enabled": "Report software info (Android version, build, kernel, etc.)",
+          "network_info_enabled": "Report network info (IMEI, WiFi MAC, operator)",
+          "memory_info_enabled": "Report memory info (RAM, storage)",
+          "display_info_enabled": "Report display info (display count)"
+        },
+        "data_description": {
+          "software_info_enabled": "Enables Android Version, Build Number, Kernel Version, Security Patch Level, Device Policy Version, Primary Language, System Update Status",
+          "network_info_enabled": "Enables IMEI, WiFi MAC Address, Network Operator",
+          "memory_info_enabled": "Enables Total RAM and storage sensors",
+          "display_info_enabled": "Enables Display Count sensor"
         }
       },
       "apply_policy": {

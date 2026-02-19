@@ -14,6 +14,6 @@ This folder contains the **wiki** for the Android Management API Home Assistant 
 | [Home.md](Home.md) | Overview and quick links (Initial Setup, Post-setup Advice, Debug Logging). |
 | [Initial-Setup.md](Initial-Setup.md) | Google Cloud, Android Management API, service account, enterprise. |
 | [Configuration.md](Configuration.md) | Adding and configuring the integration in Home Assistant. |
-| [Policy-Options.md](Policy-Options.md) | Options flow and kiosk policy categories. |
+| [Policy-Options.md](Policy-Options.md) | Options flow, kiosk policy, and device reporting categories. |
 | [Post-Setup-Advice.md](Post-Setup-Advice.md) | Best practices after setup. |
 | [Debug-Logging.md](Debug-Logging.md) | Enabling and using debug logs. |
