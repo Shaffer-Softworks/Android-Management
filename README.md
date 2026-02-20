@@ -5,6 +5,16 @@
 
 Manage your Android enterprise devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
+### Why use Android Management (DPC)?
+
+Enrolling devices with Android Management (and the built-in Device Policy Controller, or DPC) gives you centralized control and security:
+
+- **Kiosks and single-purpose devices** — Lock devices to one app (or a small set of apps), hide the status bar and navigation, and control power and display so they stay in kiosk mode for displays, point-of-sale, or signage.
+- **Security and compliance** — Enforce policies (e.g. no unknown sources, screen lock, encryption), manage OS and app updates, and restrict USB, camera, or settings as needed for company or compliance requirements.
+- **Remote management** — Reboot, lock, reset password, or wipe devices from Home Assistant; put devices in lost mode with a custom message and contact info; or unenroll/relinquish ownership when devices are retired or reassigned.
+- **Visibility and control** — See device state, policy, and diagnostics (API level, memory, non-compliance) in Home Assistant; apply or change policies from the integration or automations so devices stay in the right configuration.
+- **Unified management from Home Assistant** — Use one place (HA) to manage Android devices alongside the rest of your setup, with sensors, buttons, and services you can use in dashboards and automations.
+
 **This component will set up the following platforms.**
 
 | Platform | Description |
@@ -122,6 +132,17 @@ Maps the device `state` field — `ACTIVE` is reported as `home` (online), all o
 ### Image (per enterprise)
 
 The **Enrollment QR Code** entity generates a fresh enrollment token (valid for 24 hours) and renders it as a QR code PNG image each time it is accessed.
+
+## Enrolling a device with the QR code
+
+To enroll a new Android device using the QR code:
+
+1. **Open the QR code in Home Assistant** — Go to **Settings** → **Devices & Services**, select your **Android Management API** integration, then open the **Enrollment QR Code** image entity. The QR code is generated (or refreshed) when you open the entity; each token is valid for 24 hours.
+2. **Prepare the Android device** — Factory reset the device (or start with a device that has not been set up). During the initial setup wizard, choose the option to **Set up as work device** or **Enroll with QR code** (wording may vary by manufacturer and Android version). If you don’t see an enrollment option, **tap the setup screen several times** (e.g. six times on the Welcome screen) to reveal the QR code scanner.
+3. **Scan the QR code** — When prompted, scan the QR code displayed in Home Assistant (e.g. on your computer or phone screen). The device will enroll in your enterprise and apply the policy configured for new enrollments.
+4. **Verify** — The new device will appear under your integration after the next coordinator poll (about 60 seconds). You can then assign or adjust its policy via the integration or Options flow.
+
+For custom token duration or to get token data programmatically (e.g. for NFC or other provisioning), use the `android_management_api.create_enrollment_token` service and listen for the `android_management_api_enrollment_token_created` event.
 
 ## Services
 
