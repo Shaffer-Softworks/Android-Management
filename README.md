@@ -1,9 +1,8 @@
 # Android Management API custom component for Home Assistant
 
-![android-logo](https://github.com/Shaffer-Softworks/Android-Management/blob/main/icon.png)
+<img width="256" height="256" alt="icon" src="https://github.com/user-attachments/assets/7e3f4cdb-8ac8-498e-869c-7e929c4da344" />
 
-
-Manage your Android enterprise devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
+Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
 ### Why use Android Management (DPC)?
 

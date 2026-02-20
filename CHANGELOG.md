@@ -5,6 +5,21 @@ All notable changes to the Android Management API integration for Home Assistant
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-02-18
+
+### Added
+
+- **Device reporting**
+  - Device Reporting policy category in Options flow: enable software info, network info, memory info, and display info to populate additional sensors.
+  - New sensors (when enabled in policy): Total RAM (MB), Total Internal Storage (MB), Total External Storage (MB), Non-Compliance Count, Non-Compliance Details, Display Count.
+  - **Relinquish Ownership** button — per-device command to relinquish device ownership.
+
+### Fixed
+
+- **Translations** — Entity translation keys updated to comply with hassfest validation (removed invalid `domain__key` format).
+
+---
+
 ## [0.1.0] - 2026-02-18
 
 ### Added
@@ -36,4 +51,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Home Assistant 2024.4.0 or newer.
   - HACS 1.34.0 or newer (when installed via HACS).
 
+[0.1.1]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.0
