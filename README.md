@@ -1,6 +1,6 @@
 # Android Management API custom component for Home Assistant
 
-<img width="256" height="256" alt="icon" src="https://github.com/user-attachments/assets/7e3f4cdb-8ac8-498e-869c-7e929c4da344" />
+<img width="256" height="256" alt="icon" src="custom_components/android_management_api/brand/logo.png" />
 
 Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
