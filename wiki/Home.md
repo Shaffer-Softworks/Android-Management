@@ -33,7 +33,7 @@ For step-by-step instructions, see **[Initial Setup](Initial-Setup)**.
 After the integration is set up:
 
 - **Policy ID**: Create or choose a policy in the [Android Management API console](https://support.google.com/work/android/answer/6174145) and use its ID in the integration’s Options flow when applying settings.
-- **Enrolling a device**: Open the Enrollment QR Code image entity in Settings → Devices & Services, then on the Android device run the setup wizard (tap the Welcome screen several times if you don't see "Enroll with QR code"), and scan the QR code. See [Post-setup Advice](Post-Setup-Advice#enrolling-a-device-with-the-qr-code) for full steps.
+- **Enrolling a device**: Open the Enrollment QR Code image entity in Settings → Devices & Services; on the device, run setup and tap the Welcome screen several times if you don't see "Enroll with QR code," then scan the QR code. See [Post-setup Advice](Post-Setup-Advice#enrolling-a-device-with-the-qr-code) for full steps.
 - **Device list**: The integration polls the API about every 60 seconds; new or removed devices appear after the next update.
 - **Services**: Use `set_policy`, `set_kiosk_policy`, `create_enrollment_token`, and device-level services (`clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`) from Developer Tools → Services or from automations.
 
