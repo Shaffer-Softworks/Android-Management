@@ -4,6 +4,16 @@
 
 Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
+### Why use Android Management (DPC)?
+
+Enrolling devices with Android Management (and the built-in Device Policy Controller, or DPC) gives you centralized control and security:
+
+- **Kiosks and single-purpose devices** — Lock devices to one app (or a small set of apps), hide the status bar and navigation, and control power and display so they stay in kiosk mode for displays, point-of-sale, or signage.
+- **Security and compliance** — Enforce policies (e.g. no unknown sources, screen lock, encryption), manage OS and app updates, and restrict USB, camera, or settings as needed for company or compliance requirements.
+- **Remote management** — Reboot, lock, reset password, or wipe devices from Home Assistant; put devices in lost mode with a custom message and contact info; or unenroll/relinquish ownership when devices are retired or reassigned.
+- **Visibility and control** — See device state, policy, and diagnostics (API level, memory, non-compliance) in Home Assistant; apply or change policies from the integration or automations so devices stay in the right configuration.
+- **Unified management from Home Assistant** — Use one place (HA) to manage Android devices alongside the rest of your setup, with sensors, buttons, and services you can use in dashboards and automations.
+
 **This component will set up the following platforms.**
 
 | Platform | Description |
