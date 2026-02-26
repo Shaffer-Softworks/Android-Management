@@ -17,7 +17,7 @@ Tips and best practices after the Android Management API integration is configur
 To enroll a new Android device using the QR code:
 
 1. **Open the QR code in Home Assistant** — Go to **Settings** → **Devices & Services**, select your **Android Management API** integration, then open the **Enrollment QR Code** image entity. The QR code is generated (or refreshed) when you open the entity; each token is valid for 24 hours.
-2. **Prepare the Android device** — Factory reset the device (or start with a device that has not been set up). During the initial setup wizard, choose the option to **Set up as work device** or **Enroll with QR code** (wording may vary by manufacturer and Android version). If you don't see an enrollment option, **tap the setup screen several times** (e.g. six times on the Welcome screen) to reveal the QR code scanner.
+2. **Prepare the Android device** — Factory reset the device (or start with a device that has not been set up). During the initial setup wizard, choose the option to **Set up as work device** or **Enroll with QR code** (wording may vary by manufacturer and Android version). If you don’t see an enrollment option, **tap the setup screen several times** (e.g. six times on the Welcome screen) to reveal the QR code scanner.
 3. **Scan the QR code** — When prompted, scan the QR code displayed in Home Assistant (e.g. on your computer or phone screen). The device will enroll in your enterprise and apply the policy configured for new enrollments.
 4. **Verify** — The new device will appear under your integration after the next coordinator poll (about 60 seconds). You can then assign or adjust its policy via the integration or Options flow.
 
