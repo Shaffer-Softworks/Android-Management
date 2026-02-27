@@ -2,6 +2,9 @@
 
 <img width="256" height="256" alt="logo" src="https://github.com/user-attachments/assets/90aad15f-02db-4a05-8547-200d7b8729c7" />
 
+[![Validate](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml)
+[![CodeQL](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql)
+
 Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
 ### Why use Android Management (DPC)?
