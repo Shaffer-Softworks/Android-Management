@@ -1,6 +1,6 @@
-# Policy Options
+# Policy and integration options
 
-The integration’s **Options** flow provides a menu-driven UI to configure kiosk and device policies and push them to your enterprise. It **fetches the live policy** from the enterprise when you open it, so the form reflects what’s currently set.
+The integration’s **Options** flow provides a menu-driven UI to configure **General** and **Enterprise** settings, plus kiosk and device policies, and push policy changes to your enterprise. It **fetches the live policy and enterprise** when you open it, so the form reflects what’s currently set.
 
 ---
 
@@ -9,7 +9,7 @@ The integration’s **Options** flow provides a menu-driven UI to configure kios
 1. Go to **Settings** → **Devices & Services** → **Integrations**.
 2. Find **Android Management API** and click **Configure** on its card.
 
-You’ll see a menu with several categories. Configure the ones you need, then use **Apply Policy** to send everything to the enterprise.
+You’ll see a menu with several categories. Configure **General** (scan interval, default policy for QR code, Clear app data packages) and **Enterprise** (identity, notifications, contact, terms, sign-in) as needed, then use the policy categories and **Apply Policy** to send policy settings to the enterprise.
 
 ---
 
@@ -17,6 +17,8 @@ You’ll see a menu with several categories. Configure the ones you need, then u
 
 | Category | What you can configure |
 |----------|-------------------------|
+| **General** | Scan interval (seconds) for API polling, default policy ID for the enrollment QR code, and optional package names for the Clear app data button (one per line or comma-separated). |
+| **Enterprise** | Identity (display name, primary color, logo URL + SHA-256 hash), Notifications (Pub/Sub topic, enabled types), Contact (email, DPO, EU representative), Terms & Conditions, Sign-in (URL, token tag, allow personal usage). Apply saves enterprise settings to the API. |
 | **Kiosk App** | Primary kiosk app package name, install type, auto-update mode, lock task allowed, default permission policy, and additional force-installed apps (one per line). |
 | **Kiosk UI** | Power button behavior, system navigation, device settings access, status bar, and system error warnings. |
 | **Display** | Screen brightness mode and level (0–255), screen timeout mode and duration. |
@@ -46,10 +48,11 @@ You’ll see a menu with several categories. Configure the ones you need, then u
 
 ## Services vs Options flow
 
-- **Options flow** – Best for interactive, form-based editing; all categories are available and the UI is pre-filled from the live policy.
+- **Options flow** – Best for interactive, form-based editing; General, Enterprise, and all policy categories are available and the UI is pre-filled from the live policy and enterprise.
 - **Services** – Use from automations, scripts, or Developer Tools:
   - `android_management_api.set_policy` – Raw JSON policy body.
   - `android_management_api.set_kiosk_policy` – Structured kiosk fields (primary app, additional apps, display, security, etc.).
-  - Device-level services: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
+  - Device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
+  - Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
 
 See the [README – Services](../README.md#services) for the full list of service parameters.

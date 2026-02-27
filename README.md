@@ -18,17 +18,15 @@ Enrolling devices with Android Management (and the built-in Device Policy Contro
 
 | Platform | Description |
 |----------|-------------|
-| `sensor` | Per-device diagnostic sensors: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count. |
-| `button` | Per-device command buttons: Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership. |
-| `device_tracker` | Per-device online/offline tracker based on device state. |
-| `image` | Enterprise-level enrollment QR code generated on demand. |
+| `sensor` | Per-device diagnostic sensors: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count, enrollment token data, device trust signal. |
+| `button` | Per-device command buttons: Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data (uses package names from integration options). |
+| `image` | Enterprise-level enrollment QR code generated on demand (uses default policy from integration options). |
 
 ### Key Features
 
 - **Full Device Inventory**: All managed devices are automatically discovered and represented as Home Assistant devices with manufacturer, model, and serial number.
-- **Device Commands**: Reboot, lock, reset password, factory reset (wipe), unenroll, and relinquish ownership with a single button press; plus device-level services for lost mode, app data clear, eSIM, and more.
-- **Online/Offline Tracking**: Device tracker entities map `ACTIVE` devices to online and all other states to offline.
-- **Enrollment QR Code**: Generate a fresh 24-hour enrollment token and render it as a QR code image — ready to scan on a new device.
+- **Device Commands**: Reboot, lock, reset password, factory reset (wipe), unenroll, relinquish ownership, and clear app data with a single button press; plus device-level services for lost mode, eSIM, and more.
+- **Enrollment QR Code**: Generate a fresh 24-hour enrollment token and render it as a QR code image (optionally bound to a default policy) — ready to scan on a new device.
 - **Kiosk Policy Management**: Full Options flow UI for configuring kiosk policies — app settings, display, security, network, restrictions, and system settings. Fetches the live policy so fields always reflect what's currently set on the enterprise.
 - **Multi-App Kiosk Support**: Configure a primary kiosk app plus additional force-installed apps.
 - **Policy Management Service**: Use the `set_policy` or `set_kiosk_policy` services to manage policies from automations or scripts.
@@ -75,16 +73,18 @@ Enrolling devices with Android Management (and the built-in Device Policy Contro
     - **Provide file path on disk** — enter the absolute path to your service account JSON key file on the Home Assistant host.
 1. Click `Submit`. The integration will validate your credentials by making a test API call.
 
-## Options Flow (Policy Configuration)
+## Options Flow (Policy and integration configuration)
 
-After setup, click **Configure** on the integration card to open the policy management UI. A menu lets you configure settings across 9 categories, then push them to the enterprise in one step.
+After setup, click **Configure** on the integration card to open the options UI. A menu lets you configure **General** and **Enterprise** settings, plus policy categories (Kiosk App, Display, etc.), then push policy changes to the enterprise.
 
-The Options flow **fetches the live policy** from the enterprise when opened, so all fields reflect what's currently active on your devices.
+The Options flow **fetches the live policy and enterprise** when opened, so fields reflect what's currently active.
 
 ### Categories
 
 | Category | Settings |
 |----------|----------|
+| **General** | Scan interval (API polling, seconds), default policy ID for enrollment QR code, and optional package names for the Clear app data button (one per line or comma-separated). |
+| **Enterprise** | Identity (display name, primary color, logo URL + SHA-256 hash), Notifications (Pub/Sub topic, enabled types), Contact (email, DPO, EU rep), Terms & Conditions, Sign-in (URL, token tag, allow personal usage). |
 | **Kiosk App** | Primary kiosk app package, install type, auto-update mode, lock task, permissions, additional force-installed apps (one per line). |
 | **Kiosk UI** | Power button, system navigation, device settings access, status bar, system error warnings. |
 | **Display** | Screen brightness mode/level (0–255), screen timeout mode/duration. |
@@ -93,7 +93,7 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 | **Device Restrictions** | Factory reset, install/uninstall apps, physical media, USB file transfer, volume, microphone, outgoing calls, SMS, add user, modify accounts, user icon, wallpaper, share location, credentials config. |
 | **System** | App auto-update policy, system update type, Play Store mode, status bar, auto time, skip first-use hints, max time to lock, stay on while plugged (AC/USB/Wireless), long/short support messages. |
 | **Device Reporting** | Control which diagnostic data devices report (via `statusReportingSettings`): software info (Android version, build, kernel, security patch), network info (IMEI, WiFi MAC, operator), memory info, display info. Enabling these populates sensors that may show "Unknown" when disabled. |
-| **Apply Policy** | Enter a policy ID and push all configured settings to the enterprise. |
+| **Apply Policy** | Enter a policy ID and push all configured policy settings to the enterprise. |
 
 ## Entities
 
@@ -112,6 +112,8 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 | **Non-Compliance Count** | Number of policy non-compliance issues. |
 | **Non-Compliance Details** | Details on policy non-compliance. |
 | **Display Count** | Number of displays (requires `displayInfoEnabled` in policy). |
+| **Enrollment Token Data** | Last enrollment token data (when applicable). |
+| **Device Trust** | Device trust signal / posture (when reported). |
 
 ### Buttons (per device)
 
@@ -123,10 +125,7 @@ The Options flow **fetches the live policy** from the enterprise when opened, so
 | **Factory Reset** | Wipes the device and removes it from the enterprise. |
 | **Unenroll** | Removes the device from enterprise management. |
 | **Relinquish Ownership** | Removes work profile and policies from company-owned device for personal use (Android 8+ COPE). |
-
-### Device Tracker (per device)
-
-Maps the device `state` field — `ACTIVE` is reported as `home` (online), all other states as `not_home` (offline).
+| **Clear app data** | Clears app data for packages configured in integration options (General → package names). |
 
 ### Image (per enterprise)
 
@@ -186,8 +185,13 @@ Create a new enrollment token for device provisioning. Fires an `android_managem
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `policy_name` | No | Full policy resource name to bind to the token. |
+| `enterprise_name` | Yes* | Full enterprise resource name (e.g. `enterprises/LC00t1kz5a`). *Required when calling from service; optional when triggered by integration. |
+| `policy_id` | No | Policy ID to bind to the token (e.g. `policy1`). |
+| `policy_name` | No | Full policy resource name (alternative to `policy_id`). |
 | `duration` | No | Token validity duration (default `86400s` = 24 hours). |
+| `one_time_only` | No | If true, token can only be used once. |
+| `additional_data` | No | Optional string passed to the device during provisioning. |
+| `allow_personal_usage` | No | `ALLOW_PERSONAL_USAGE_UNSPECIFIED`, `PERSONAL_USAGE_ALLOWED`, or `PERSONAL_USAGE_DISALLOWED`. |
 
 ### `android_management_api.clear_app_data`
 
@@ -287,6 +291,18 @@ Reset device password with optional new password and flags.
 | `device_id` | Yes | Device ID or full resource name. |
 | `new_password` | No | New password (min 6 chars if numeric on Android 14). |
 | `reset_password_flags` | No | Comma-separated: `REQUIRE_ENTRY`, `DO_NOT_ASK_CREDENTIALS_ON_BOOT`, `LOCK_NOW`. |
+
+### Enterprise and policy listing
+
+| Service | Description |
+|---------|-------------|
+| `android_management_api.list_policies` | List policies for the enterprise (requires `enterprise_name`). |
+| `android_management_api.list_enrollment_tokens` | List enrollment tokens (requires `enterprise_name`). |
+| `android_management_api.delete_enrollment_token` | Delete an enrollment token by name. |
+| `android_management_api.get_operation` | Get status of a long-running operation by name. |
+| `android_management_api.get_enterprise` | Get enterprise resource (display name, logo, contact, etc.). |
+| `android_management_api.patch_enterprise` | Update enterprise (body + update mask). |
+| `android_management_api.create_web_token` | Create a web token for managed Google Play iframe (parent frame URL, permissions). |
 
 ## Debug Logging
 

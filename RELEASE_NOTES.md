@@ -4,6 +4,24 @@ Use the section below when creating a new [GitHub Release](https://github.com/Sh
 
 ---
 
+## v0.1.5 (2026-02-27)
+
+Update focusing on General/Enterprise options, new services, Clear app data button, and removal of the device tracker.
+
+### Changes
+
+- **General options**: Configure scan interval (API polling), default policy for enrollment QR code, and package names for the Clear app data button.
+- **Enterprise options**: Configure identity (display name, primary color, logo), notifications, contact info, terms & conditions, and sign-in details from the integration UI.
+- **New sensors**: Enrollment Token Data, Device Trust.
+- **Clear app data button**: Per-device button using packages from General options.
+- **Enrollment token**: Supports `policy_id`, `one_time_only`, `additional_data`, `allow_personal_usage`.
+- **New services**: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
+- **Device tracker removed**: The Android Management API does not provide device location. The device tracker platform has been removed; any existing device_tracker entities are removed from the entity registry when the integration is reloaded.
+
+See the [README](https://github.com/Shaffer-Softworks/Android-Management#readme) and [Wiki](https://github.com/Shaffer-Softworks/Android-Management/wiki) for setup and configuration.
+
+---
+
 ## v0.1.0 (2026-02-18)
 
 Initial release of the **Android Management API** custom component for Home Assistant. Manage Android enterprise devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).

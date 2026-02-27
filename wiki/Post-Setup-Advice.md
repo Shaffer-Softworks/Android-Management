@@ -27,7 +27,7 @@ For custom token duration or to get token data programmatically (e.g. for NFC or
 
 ## Device list and polling
 
-- The integration uses a **DataUpdateCoordinator** that polls the Android Management API about **every 60 seconds**.
+- The integration uses a **DataUpdateCoordinator** that polls the Android Management API. The **scan interval** (default 60 seconds) can be changed in **Configure** → **General**.
 - Newly enrolled devices appear after the next poll; removed or wiped devices disappear after the next update.
 - If a device doesn’t show up, confirm it’s enrolled in the same enterprise and that the service account has access to that enterprise.
 
@@ -43,8 +43,7 @@ For custom token duration or to get token data programmatically (e.g. for NFC or
 
 ## Buttons and device state
 
-- Per-device **buttons** (Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership) send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply.
-- **Device tracker** entities map `ACTIVE` to `home` (online) and other states to `not_home` (offline).
+- Per-device **buttons** (Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data) send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply. **Clear app data** uses the package names configured in **Configure** → **General**.
 
 ---
 

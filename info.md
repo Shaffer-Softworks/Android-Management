@@ -42,27 +42,29 @@ After setup, click **Configure** on the integration card to manage kiosk policie
 - **Network & Connectivity** — Wi-Fi, Bluetooth, VPN, tethering, data roaming, mobile networks, and more.
 - **Device Restrictions** — Factory reset, app install/uninstall, USB, volume, calls, SMS, accounts, and more.
 - **System** — Auto-update policy, system updates, Play Store mode, support messages, and more.
+- **General** — Scan interval, default policy for enrollment QR code, package names for Clear app data button
+- **Enterprise** — Identity (display name, primary color, logo), Notifications, Contact, Terms & Conditions, Sign-in
 - **Device Reporting** — Control which diagnostic data devices report (software info, network info, memory info, display info). Enables sensors that may show "Unknown" when disabled.
 - **Apply Policy** — Push all settings to the enterprise with a single click.
 
-The Options flow fetches the **live policy** from the enterprise so fields always show what's currently active.
+The Options flow fetches the **live policy and enterprise** so fields always show what's currently active.
 
 ## Entities Created
 
 **Per managed device:**
-- **Sensors** — State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count
-- **Buttons** — Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership
-- **Device Tracker** — Online (`home`) / Offline (`not_home`) based on device state
+- **Sensors** — State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count, enrollment token data, device trust
+- **Buttons** — Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data
 
 **Per enterprise:**
-- **Image** — Enrollment QR Code (generates a fresh 24-hour enrollment token on demand)
+- **Image** — Enrollment QR Code (generates a fresh 24-hour enrollment token on demand; uses default policy from options)
 
 ## Services
 
 - `android_management_api.set_policy` — Create or update a policy by ID with an optional raw JSON body.
 - `android_management_api.set_kiosk_policy` — Create or update a kiosk policy with structured fields (primary app + additional apps, display, security, kiosk UI, and more).
-- `android_management_api.create_enrollment_token` — Create an enrollment token (fires an event with the token data).
-- Device-level services: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
+- `android_management_api.create_enrollment_token` — Create an enrollment token (policy_id, one_time_only, additional_data, allow_personal_usage; fires an event with the token data).
+- Device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
+- Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
 
 <!-- {% endif %} -->
 
@@ -72,12 +74,11 @@ The Options flow fetches the **live policy** from the enterprise so fields alway
 **Features:**
 - Full integration with Google's [Android Management API](https://developers.google.com/android/management)
 - Two-step config flow with service account authentication (paste JSON or provide file path)
-- **Options flow** with 9 categories: Kiosk App, Kiosk UI, Display, Security & Privacy, Network & Connectivity, Device Restrictions, System, **Device Reporting** (diagnostic data), Apply Policy — fetches the live policy to pre-populate fields
+- **Options flow** with **General**, **Enterprise**, and policy categories: Kiosk App, Kiosk UI, Display, Security & Privacy, Network & Connectivity, Device Restrictions, System, Device Reporting, Apply Policy — fetches live policy and enterprise to pre-populate fields
 - **Multi-app kiosk support** — configure a primary kiosk app plus additional force-installed apps
-- **DataUpdateCoordinator** polling device list every 60 seconds
-- Per-device **sensors**: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count
-- Per-device **buttons**: Reboot, Lock, Reset Password, Factory Reset (wipe), Unenroll, Relinquish Ownership
-- Per-device **device tracker**: maps `ACTIVE` state to online, all others to offline
-- Enterprise-level **enrollment QR code** image entity (generates a 24-hour token on demand)
-- **Services**: `set_policy`, `set_kiosk_policy`, `create_enrollment_token`; device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`
+- **DataUpdateCoordinator** with configurable scan interval (default 60 s)
+- Per-device **sensors**: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info, network info, memory info, non-compliance details, display count, enrollment token data, device trust
+- Per-device **buttons**: Reboot, Lock, Reset Password, Factory Reset (wipe), Unenroll, Relinquish Ownership, Clear app data
+- Enterprise-level **enrollment QR code** image entity (24-hour token on demand; default policy from options)
+- **Services**: `set_policy`, `set_kiosk_policy`, `create_enrollment_token` (with policy_id, one_time_only, etc.); device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`; enterprise: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`
 <!-- {% endif %} -->
