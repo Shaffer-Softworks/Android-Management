@@ -5,6 +5,28 @@ All notable changes to the Android Management API integration for Home Assistant
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2026-02-27
+
+### Added
+
+- **General options** (Configure → General): Scan interval (API polling, seconds), default policy ID for enrollment QR code, optional package names for the Clear app data button (one per line or comma-separated).
+- **Enterprise options** (Configure → Enterprise): Identity (display name, primary color, logo URL + SHA-256 hash), Notifications (Pub/Sub topic, enabled types), Contact (email, DPO, EU rep), Terms & Conditions, Sign-in (URL, token tag, allow personal usage). Apply step pushes enterprise settings to the API.
+- **New sensors**: Enrollment Token Data, Device Trust (when reported by API).
+- **Clear app data button**: Per-device button that clears app data for packages configured in General options.
+- **Enrollment token options**: `create_enrollment_token` and QR code support `policy_id`, `one_time_only`, `additional_data`, `allow_personal_usage`.
+- **New services**: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
+- **Entity registry cleanup**: On setup/reload, any legacy device_tracker entities for this integration are automatically removed from the entity registry.
+
+### Removed
+
+- **Device tracker platform**: The Android Management API does not provide device location/GPS; the device tracker only reflected management state (ACTIVE = home). The platform has been removed. Existing device_tracker entities are removed from the registry when the integration is reloaded.
+
+### Fixed
+
+- **Entity registry API**: Use `registry.entities.get_entries_for_config_entry_id()` for compatibility with current Home Assistant versions when removing legacy device_tracker entities.
+
+---
+
 ## [0.1.1] - 2026-02-18
 
 ### Added
@@ -51,5 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Home Assistant 2024.4.0 or newer.
   - HACS 1.34.0 or newer (when installed via HACS).
 
+[0.1.5]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.5
 [0.1.1]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.0
