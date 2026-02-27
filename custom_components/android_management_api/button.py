@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -20,7 +20,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import AndroidManagementConfigEntry
 from .api import AndroidManagementAPIClient
-from .const import DOMAIN
+from .const import CONF_CLEAR_APP_DATA_PACKAGES, DOMAIN
 from .coordinator import AndroidManagementCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,9 +30,11 @@ _LOGGER = logging.getLogger(__name__)
 class AndroidManagementButtonDescription(ButtonEntityDescription):
     """Describe an Android Management button."""
 
-    press_fn: Callable[
-        [HomeAssistant, AndroidManagementAPIClient, str], Awaitable[Any]
-    ]
+    press_fn: Optional[
+        Callable[
+            [HomeAssistant, AndroidManagementAPIClient, str], Awaitable[Any]
+        ]
+    ] = None
 
 
 async def _reboot(
@@ -73,6 +75,27 @@ async def _relinquish_ownership(
     await client.async_issue_command(hass, device_name, "RELINQUISH_OWNERSHIP")
 
 
+async def _clear_app_data(
+    hass: HomeAssistant,
+    client: AndroidManagementAPIClient,
+    device_name: str,
+    package_names: list[str],
+) -> None:
+    """Clear app data for given packages. Caller must supply non-empty list."""
+    if not package_names:
+        _LOGGER.warning(
+            "Clear app data: no package names configured. Set "
+            "'Clear app data package names' in integration options (General)."
+        )
+        return
+    await client.async_issue_command(
+        hass,
+        device_name,
+        "CLEAR_APP_DATA",
+        clearAppsDataParams={"packageNames": package_names},
+    )
+
+
 BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
     AndroidManagementButtonDescription(
         key="reboot",
@@ -98,7 +121,6 @@ BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
     AndroidManagementButtonDescription(
         key="factory_reset",
         name="Factory Reset",
-        icon="mdi:cellphone-erase",
         entity_category=EntityCategory.CONFIG,
         press_fn=_wipe,
     ),
@@ -116,6 +138,13 @@ BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
         entity_category=EntityCategory.CONFIG,
         press_fn=_relinquish_ownership,
     ),
+    AndroidManagementButtonDescription(
+        key="clear_app_data",
+        name="Clear app data",
+        icon="mdi:delete-sweep",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=None,  # Handled in entity using options
+    ),
 )
 
 
@@ -131,7 +160,9 @@ async def async_setup_entry(
     for device_id in coordinator.data:
         for description in BUTTON_DESCRIPTIONS:
             entities.append(
-                AndroidManagementButton(coordinator, device_id, description)
+                AndroidManagementButton(
+                    coordinator, device_id, description, entry
+                )
             )
 
     async_add_entities(entities)
@@ -150,10 +181,12 @@ class AndroidManagementButton(
         coordinator: AndroidManagementCoordinator,
         device_id: str,
         description: AndroidManagementButtonDescription,
+        entry: AndroidManagementConfigEntry,
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
         self._device_id = device_id
+        self._entry = entry
         self._attr_unique_id = f"{device_id}_{description.key}"
 
     @property
@@ -177,7 +210,24 @@ class AndroidManagementButton(
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self.entity_description.press_fn(
-            self.hass, self.coordinator.client, self._full_device_name
-        )
+        desc = self.entity_description
+        if desc.key == "clear_app_data":
+            raw = self._entry.options.get(CONF_CLEAR_APP_DATA_PACKAGES, "")
+            packages = [
+                p.strip()
+                for p in raw.replace(",", "\n").splitlines()
+                if p.strip()
+            ]
+            await _clear_app_data(
+                self.hass,
+                self.coordinator.client,
+                self._full_device_name,
+                packages,
+            )
+        elif desc.press_fn is not None:
+            await desc.press_fn(
+                self.hass,
+                self.coordinator.client,
+                self._full_device_name,
+            )
         await self.coordinator.async_request_refresh()

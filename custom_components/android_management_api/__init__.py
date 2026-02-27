@@ -6,15 +6,19 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .api import AndroidManagementAPIClient
 from .const import (
     AUTH_METHOD_FILE,
     AUTH_METHOD_JSON,
     CONF_AUTH_METHOD,
+    CONF_DEFAULT_POLICY_ID,
     CONF_ENTERPRISE_NAME,
     CONF_FILE_PATH,
+    CONF_SCAN_INTERVAL,
     CONF_SERVICE_ACCOUNT_JSON,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     PLATFORMS,
 )
@@ -48,10 +52,21 @@ async def async_setup_entry(
             )
         )
 
-    coordinator = AndroidManagementCoordinator(hass, client)
+    scan_interval = entry.options.get(
+        CONF_SCAN_INTERVAL,
+        entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+    )
+    coordinator = AndroidManagementCoordinator(hass, client, scan_interval=scan_interval)
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator
+
+    # Remove any legacy device_tracker entities (platform was removed)
+    registry = er.async_get(hass)
+    for entity_entry in registry.entities.get_entries_for_config_entry_id(entry.entry_id):
+        if entity_entry.entity_id.startswith("device_tracker."):
+            registry.async_remove(entity_entry.entity_id)
+            _LOGGER.debug("Removed legacy device_tracker entity: %s", entity_entry.entity_id)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_register_services(hass)
