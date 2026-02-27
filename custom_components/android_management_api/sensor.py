@@ -295,6 +295,26 @@ SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
         if d.get("displays") is not None
         else None,
     ),
+    # --- Enrollment token data (set via additionalData when creating token) ---
+    AndroidManagementSensorDescription(
+        key="enrollment_token_data",
+        translation_key="enrollment_token_data",
+        name="Enrollment Token Data",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("enrollmentTokenData"),
+    ),
+    # --- Device trust (when available from API) ---
+    AndroidManagementSensorDescription(
+        key="device_trust_signal",
+        translation_key="device_trust_signal",
+        name="Device Trust",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(d.get("deviceTrustSignal"))
+            if d.get("deviceTrustSignal") is not None
+            else None
+        ),
+    ),
 )
 
 

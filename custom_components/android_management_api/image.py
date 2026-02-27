@@ -17,7 +17,12 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import AndroidManagementConfigEntry
-from .const import CONF_ENTERPRISE_NAME, DEFAULT_TOKEN_DURATION, DOMAIN
+from .const import (
+    CONF_DEFAULT_POLICY_ID,
+    CONF_ENTERPRISE_NAME,
+    DEFAULT_TOKEN_DURATION,
+    DOMAIN,
+)
 from .coordinator import AndroidManagementCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,8 +36,15 @@ async def async_setup_entry(
     """Set up the enrollment QR code image entity."""
     coordinator = entry.runtime_data
     enterprise_name = entry.data[CONF_ENTERPRISE_NAME]
+    default_policy_id = entry.options.get(CONF_DEFAULT_POLICY_ID) or entry.data.get(
+        CONF_DEFAULT_POLICY_ID, ""
+    )
     async_add_entities(
-        [EnrollmentQRCodeImage(coordinator, enterprise_name)]
+        [
+            EnrollmentQRCodeImage(
+                coordinator, enterprise_name, default_policy_id=default_policy_id
+            )
+        ]
     )
 
 
@@ -47,10 +59,12 @@ class EnrollmentQRCodeImage(ImageEntity):
         self,
         coordinator: AndroidManagementCoordinator,
         enterprise_name: str,
+        default_policy_id: str = "",
     ) -> None:
         super().__init__(coordinator.hass)
         self._coordinator = coordinator
         self._enterprise_name = enterprise_name
+        self._default_policy_id = (default_policy_id or "").strip()
         self._attr_unique_id = f"{enterprise_name}_enrollment_qr"
         self._qr_bytes: bytes | None = None
         self._attr_image_last_updated = datetime.now()
@@ -70,6 +84,7 @@ class EnrollmentQRCodeImage(ImageEntity):
         try:
             token_data = await self._coordinator.client.async_create_enrollment_token(
                 self._coordinator.hass,
+                policy_id=self._default_policy_id or None,
                 duration=DEFAULT_TOKEN_DURATION,
             )
             qr_value = token_data.get("qrCode", "")

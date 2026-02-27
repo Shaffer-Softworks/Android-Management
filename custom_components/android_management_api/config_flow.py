@@ -32,9 +32,13 @@ from .const import (
     AUTH_METHOD_FILE,
     AUTH_METHOD_JSON,
     CONF_AUTH_METHOD,
+    CONF_CLEAR_APP_DATA_PACKAGES,
+    CONF_DEFAULT_POLICY_ID,
     CONF_ENTERPRISE_NAME,
     CONF_FILE_PATH,
+    CONF_SCAN_INTERVAL,
     CONF_SERVICE_ACCOUNT_JSON,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
 
@@ -667,12 +671,186 @@ class AndroidManagementConfigFlow(ConfigFlow, domain=DOMAIN):
 #  Options Flow
 # ═════════════════════════════════════════════════════════════════════════════
 
+GENERAL_OPTIONS_SCHEMA = {
+    vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): _number(
+        30, 600
+    ),
+    vol.Optional(CONF_DEFAULT_POLICY_ID, default=""): _text(),
+    vol.Optional(CONF_CLEAR_APP_DATA_PACKAGES, default=""): _text(multiline=True),
+}
+
+# ── Enterprise options (Identity, Notifications, Contact, Terms, Sign-in) ───
+
+ENTERPRISE_IDENTITY_SCHEMA = {
+    vol.Optional("enterprise_display_name", default=""): _text(),
+    vol.Optional("enterprise_primary_color"): NumberSelector(
+        NumberSelectorConfig(
+            min=0, max=16777215, step=1, mode=NumberSelectorMode.BOX
+        )
+    ),
+    vol.Optional("enterprise_logo_url", default=""): _text(),
+    vol.Optional("enterprise_logo_sha256_hash", default=""): _text(),
+}
+
+NOTIFICATION_TYPES = [
+    "ENROLLMENT",
+    "COMPLIANCE_REPORT",
+    "STATUS_REPORT",
+    "COMMAND",
+    "USAGE_LOGS",
+    "ENTERPRISE_UPGRADE",
+]
+
+ENTERPRISE_NOTIFICATIONS_SCHEMA = {
+    vol.Optional("enterprise_pubsub_topic", default=""): _text(),
+    vol.Optional("enterprise_enabled_notification_types", default=[]): SelectSelector(
+        SelectSelectorConfig(
+            options=[{"value": t, "label": t} for t in NOTIFICATION_TYPES],
+            multiple=True,
+            mode=SelectSelectorMode.DROPDOWN,
+        )
+    ),
+}
+
+ENTERPRISE_CONTACT_SCHEMA = {
+    vol.Optional("enterprise_contact_email", default=""): _text(),
+    vol.Optional("enterprise_dpo_name", default=""): _text(),
+    vol.Optional("enterprise_dpo_email", default=""): _text(),
+    vol.Optional("enterprise_dpo_phone", default=""): _text(),
+    vol.Optional("enterprise_eu_rep_name", default=""): _text(),
+    vol.Optional("enterprise_eu_rep_email", default=""): _text(),
+    vol.Optional("enterprise_eu_rep_phone", default=""): _text(),
+}
+
+ENTERPRISE_TERMS_SCHEMA = {
+    vol.Optional("enterprise_terms_header", default=""): _text(),
+    vol.Optional("enterprise_terms_content", default=""): _text(multiline=True),
+}
+
+ENTERPRISE_SIGNIN_SCHEMA = {
+    vol.Optional("enterprise_signin_url", default=""): _text(),
+    vol.Optional(
+        "enterprise_signin_allow_personal_usage", default="PERSONAL_USAGE_ALLOWED"
+    ): _select(["PERSONAL_USAGE_ALLOWED", "PERSONAL_USAGE_DISALLOWED"]),
+    vol.Optional("enterprise_signin_token_tag", default=""): _text(),
+    vol.Optional(
+        "enterprise_signin_default_status",
+        default="SIGNIN_DETAIL_IS_NOT_DEFAULT",
+    ): _select([
+        "SIGNIN_DETAIL_DEFAULT_STATUS_UNSPECIFIED",
+        "SIGNIN_DETAIL_IS_DEFAULT",
+        "SIGNIN_DETAIL_IS_NOT_DEFAULT",
+    ]),
+}
+
+
+def _build_enterprise_patch_body(options: dict[str, Any]) -> dict[str, Any]:
+    """Build enterprise patch body from options (Identity, Notifications, Contact, Terms, Sign-in)."""
+    body: dict[str, Any] = {}
+
+    # Identity
+    if options.get("enterprise_display_name") not in (None, ""):
+        body["enterpriseDisplayName"] = (options.get("enterprise_display_name") or "").strip()
+    if "enterprise_primary_color" in options and options["enterprise_primary_color"] is not None:
+        body["primaryColor"] = int(options["enterprise_primary_color"])
+    logo_url = (options.get("enterprise_logo_url") or "").strip()
+    logo_hash = (options.get("enterprise_logo_sha256_hash") or "").strip()
+    if logo_url or logo_hash:
+        body["logo"] = {k: v for k, v in (
+            ("url", logo_url or None),
+            ("sha256Hash", logo_hash or None),
+        ) if v}
+
+    # Notifications
+    pubsub = (options.get("enterprise_pubsub_topic") or "").strip()
+    if pubsub:
+        body["pubsubTopic"] = pubsub
+    types_ = options.get("enterprise_enabled_notification_types")
+    if isinstance(types_, list) and types_:
+        body["enabledNotificationTypes"] = types_
+
+    # Contact
+    contact_email = (options.get("enterprise_contact_email") or "").strip()
+    dpo_name = (options.get("enterprise_dpo_name") or "").strip()
+    dpo_email = (options.get("enterprise_dpo_email") or "").strip()
+    dpo_phone = (options.get("enterprise_dpo_phone") or "").strip()
+    eu_name = (options.get("enterprise_eu_rep_name") or "").strip()
+    eu_email = (options.get("enterprise_eu_rep_email") or "").strip()
+    eu_phone = (options.get("enterprise_eu_rep_phone") or "").strip()
+    if any([contact_email, dpo_name, dpo_email, dpo_phone, eu_name, eu_email, eu_phone]):
+        body["contactInfo"] = {
+            "contactEmail": contact_email or None,
+            "dataProtectionOfficerName": dpo_name or None,
+            "dataProtectionOfficerEmail": dpo_email or None,
+            "dataProtectionOfficerPhone": dpo_phone or None,
+            "euRepresentativeName": eu_name or None,
+            "euRepresentativeEmail": eu_email or None,
+            "euRepresentativePhone": eu_phone or None,
+        }
+        body["contactInfo"] = {k: v for k, v in body["contactInfo"].items() if v}
+
+    # Terms (one term: header + content)
+    terms_header = (options.get("enterprise_terms_header") or "").strip()
+    terms_content = (options.get("enterprise_terms_content") or "").strip()
+    if terms_header or terms_content:
+        body["termsAndConditions"] = [
+            {
+                "header": {"defaultMessage": terms_header, "localizedMessages": {}},
+                "content": {"defaultMessage": terms_content, "localizedMessages": {}},
+            }
+        ]
+
+    # Sign-in (one signin detail)
+    signin_url = (options.get("enterprise_signin_url") or "").strip()
+    if signin_url:
+        detail: dict[str, Any] = {
+            "signinUrl": signin_url,
+            "allowPersonalUsage": options.get(
+                "enterprise_signin_allow_personal_usage", "PERSONAL_USAGE_ALLOWED"
+            ),
+        }
+        tag = (options.get("enterprise_signin_token_tag") or "").strip()
+        if tag:
+            detail["tokenTag"] = tag
+        status = options.get("enterprise_signin_default_status")
+        if status and status != "SIGNIN_DETAIL_DEFAULT_STATUS_UNSPECIFIED":
+            detail["defaultStatus"] = status
+        body["signinDetails"] = [detail]
+
+    return body
+
+
 class AndroidManagementOptionsFlow(OptionsFlow):
     """Options flow with a menu for every Android Management policy category."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
-        self._options: dict[str, Any] = dict(config_entry.options)
+        self._options = dict(config_entry.options)
+        self._options.setdefault(
+            CONF_SCAN_INTERVAL,
+            config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        )
+        self._options.setdefault(
+            CONF_DEFAULT_POLICY_ID,
+            config_entry.data.get(CONF_DEFAULT_POLICY_ID, "")
+            or config_entry.options.get(CONF_DEFAULT_POLICY_ID, ""),
+        )
+        self._options.setdefault(
+            CONF_CLEAR_APP_DATA_PACKAGES,
+            config_entry.options.get(CONF_CLEAR_APP_DATA_PACKAGES, ""),
+        )
         self._policy_fetched = False
+        self._enterprise_fetched = False
+        for key in (
+            "enterprise_display_name", "enterprise_logo_url", "enterprise_logo_sha256_hash",
+            "enterprise_pubsub_topic", "enterprise_contact_email", "enterprise_dpo_name",
+            "enterprise_dpo_email", "enterprise_dpo_phone", "enterprise_eu_rep_name",
+            "enterprise_eu_rep_email", "enterprise_eu_rep_phone", "enterprise_terms_header",
+            "enterprise_terms_content", "enterprise_signin_url", "enterprise_signin_token_tag",
+        ):
+            self._options.setdefault(key, "")
+        self._options.setdefault("enterprise_enabled_notification_types", [])
+        self._options.setdefault("enterprise_signin_allow_personal_usage", "PERSONAL_USAGE_ALLOWED")
+        self._options.setdefault("enterprise_signin_default_status", "SIGNIN_DETAIL_IS_NOT_DEFAULT")
 
     # ── Menu ─────────────────────────────────────────────────────────────
 
@@ -686,6 +864,8 @@ class AndroidManagementOptionsFlow(OptionsFlow):
         return self.async_show_menu(
             step_id="init",
             menu_options=[
+                "general",
+                "enterprise",
                 "kiosk_app",
                 "kiosk_ui",
                 "display",
@@ -696,6 +876,29 @@ class AndroidManagementOptionsFlow(OptionsFlow):
                 "device_reporting",
                 "apply_policy",
             ],
+        )
+
+    async def async_step_general(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Integration-wide options: scan interval, default policy for enrollment."""
+        if user_input is not None:
+            self._options[CONF_SCAN_INTERVAL] = int(
+                user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+            )
+            self._options[CONF_DEFAULT_POLICY_ID] = (
+                user_input.get(CONF_DEFAULT_POLICY_ID) or ""
+            ).strip()
+            self._options[CONF_CLEAR_APP_DATA_PACKAGES] = (
+                user_input.get(CONF_CLEAR_APP_DATA_PACKAGES) or ""
+            ).strip()
+            return self.async_create_entry(title="", data=self._options)
+
+        return self.async_show_form(
+            step_id="general",
+            data_schema=_schema_with_suggestions(
+                GENERAL_OPTIONS_SCHEMA, self._options
+            ),
         )
 
     async def _fetch_live_policy(self) -> None:
@@ -720,6 +923,164 @@ class AndroidManagementOptionsFlow(OptionsFlow):
                 "Could not fetch live policy '%s'; using saved options only",
                 policy_id,
             )
+
+    async def _fetch_live_enterprise(self) -> None:
+        """Fetch current enterprise from API and seed enterprise options."""
+        try:
+            coordinator = self.config_entry.runtime_data
+            ent = await coordinator.client.async_get_enterprise(self.hass)
+            self._options["enterprise_display_name"] = ent.get("enterpriseDisplayName") or ""
+            self._options["enterprise_primary_color"] = ent.get("primaryColor")
+            logo = ent.get("logo") or {}
+            self._options["enterprise_logo_url"] = logo.get("url") or ""
+            self._options["enterprise_logo_sha256_hash"] = logo.get("sha256Hash") or ""
+            self._options["enterprise_pubsub_topic"] = ent.get("pubsubTopic") or ""
+            self._options["enterprise_enabled_notification_types"] = ent.get(
+                "enabledNotificationTypes", []
+            )
+            contact = ent.get("contactInfo") or {}
+            self._options["enterprise_contact_email"] = contact.get("contactEmail") or ""
+            self._options["enterprise_dpo_name"] = contact.get("dataProtectionOfficerName") or ""
+            self._options["enterprise_dpo_email"] = contact.get("dataProtectionOfficerEmail") or ""
+            self._options["enterprise_dpo_phone"] = contact.get("dataProtectionOfficerPhone") or ""
+            self._options["enterprise_eu_rep_name"] = contact.get("euRepresentativeName") or ""
+            self._options["enterprise_eu_rep_email"] = contact.get("euRepresentativeEmail") or ""
+            self._options["enterprise_eu_rep_phone"] = contact.get("euRepresentativePhone") or ""
+            terms = ent.get("termsAndConditions") or []
+            if terms:
+                t = terms[0]
+                self._options["enterprise_terms_header"] = (t.get("header") or {}).get("defaultMessage") or ""
+                self._options["enterprise_terms_content"] = (t.get("content") or {}).get("defaultMessage") or ""
+            else:
+                self._options.setdefault("enterprise_terms_header", "")
+                self._options.setdefault("enterprise_terms_content", "")
+            signin = ent.get("signinDetails") or []
+            if signin:
+                s = signin[0]
+                self._options["enterprise_signin_url"] = s.get("signinUrl") or ""
+                self._options["enterprise_signin_allow_personal_usage"] = s.get("allowPersonalUsage", "PERSONAL_USAGE_ALLOWED")
+                self._options["enterprise_signin_token_tag"] = s.get("tokenTag") or ""
+                self._options["enterprise_signin_default_status"] = s.get("defaultStatus", "SIGNIN_DETAIL_IS_NOT_DEFAULT")
+            else:
+                self._options.setdefault("enterprise_signin_url", "")
+                self._options.setdefault("enterprise_signin_allow_personal_usage", "PERSONAL_USAGE_ALLOWED")
+                self._options.setdefault("enterprise_signin_token_tag", "")
+                self._options.setdefault("enterprise_signin_default_status", "SIGNIN_DETAIL_IS_NOT_DEFAULT")
+            _LOGGER.debug("Fetched live enterprise; seeded options")
+        except Exception:
+            _LOGGER.debug("Could not fetch live enterprise; using saved options only")
+
+    # ── Enterprise ────────────────────────────────────────────────────────
+
+    async def async_step_enterprise(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Enterprise sub-menu: Identity, Notifications, Contact, Terms, Sign-in, Apply."""
+        if not self._enterprise_fetched:
+            self._enterprise_fetched = True
+            await self._fetch_live_enterprise()
+        return self.async_show_menu(
+            step_id="enterprise",
+            menu_options=[
+                "enterprise_identity",
+                "enterprise_notifications",
+                "enterprise_contact",
+                "enterprise_terms",
+                "enterprise_signin",
+                "apply_enterprise",
+            ],
+        )
+
+    async def async_step_enterprise_identity(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_enterprise()
+        return self.async_show_form(
+            step_id="enterprise_identity",
+            data_schema=_schema_with_suggestions(
+                ENTERPRISE_IDENTITY_SCHEMA, self._options
+            ),
+        )
+
+    async def async_step_enterprise_notifications(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_enterprise()
+        return self.async_show_form(
+            step_id="enterprise_notifications",
+            data_schema=_schema_with_suggestions(
+                ENTERPRISE_NOTIFICATIONS_SCHEMA, self._options
+            ),
+        )
+
+    async def async_step_enterprise_contact(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_enterprise()
+        return self.async_show_form(
+            step_id="enterprise_contact",
+            data_schema=_schema_with_suggestions(
+                ENTERPRISE_CONTACT_SCHEMA, self._options
+            ),
+        )
+
+    async def async_step_enterprise_terms(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_enterprise()
+        return self.async_show_form(
+            step_id="enterprise_terms",
+            data_schema=_schema_with_suggestions(
+                ENTERPRISE_TERMS_SCHEMA, self._options
+            ),
+        )
+
+    async def async_step_enterprise_signin(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._options.update(user_input)
+            return await self.async_step_enterprise()
+        return self.async_show_form(
+            step_id="enterprise_signin",
+            data_schema=_schema_with_suggestions(
+                ENTERPRISE_SIGNIN_SCHEMA, self._options
+            ),
+        )
+
+    async def async_step_apply_enterprise(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            body = _build_enterprise_patch_body(self._options)
+            if not body:
+                errors["base"] = "enterprise_empty"
+            else:
+                try:
+                    coordinator = self.config_entry.runtime_data
+                    await coordinator.client.async_patch_enterprise(
+                        self.hass, body=body
+                    )
+                except Exception:
+                    _LOGGER.exception("Failed to apply enterprise settings")
+                    errors["base"] = "apply_enterprise_failed"
+                else:
+                    return self.async_create_entry(title="", data=self._options)
+        schema = vol.Schema({})
+        return self.async_show_form(
+            step_id="apply_enterprise",
+            data_schema=schema,
+            errors=errors,
+        )
 
     # ── Kiosk App ────────────────────────────────────────────────────────
 

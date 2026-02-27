@@ -11,7 +11,7 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN
+from .const import ALLOW_PERSONAL_USAGE_VALUES, DOMAIN
 from .coordinator import AndroidManagementCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,6 +29,13 @@ SERVICE_REMOVE_ESIM = "remove_esim"
 SERVICE_REQUEST_DEVICE_INFO = "request_device_info"
 SERVICE_ISSUE_COMMAND = "issue_command"
 SERVICE_RESET_PASSWORD = "reset_password"
+SERVICE_LIST_POLICIES = "list_policies"
+SERVICE_LIST_ENROLLMENT_TOKENS = "list_enrollment_tokens"
+SERVICE_DELETE_ENROLLMENT_TOKEN = "delete_enrollment_token"
+SERVICE_GET_OPERATION = "get_operation"
+SERVICE_GET_ENTERPRISE = "get_enterprise"
+SERVICE_PATCH_ENTERPRISE = "patch_enterprise"
+SERVICE_CREATE_WEB_TOKEN = "create_web_token"
 
 ATTR_DEVICE_ID = "device_id"
 ATTR_POLICY_ID = "policy_id"
@@ -73,6 +80,16 @@ ATTR_COMMAND_TYPE = "command_type"
 ATTR_COMMAND_PARAMS = "command_params"
 ATTR_NEW_PASSWORD = "new_password"
 ATTR_RESET_PASSWORD_FLAGS = "reset_password_flags"
+ATTR_POLICY_ID_TOKEN = "policy_id"
+ATTR_ONE_TIME_ONLY = "one_time_only"
+ATTR_ADDITIONAL_DATA = "additional_data"
+ATTR_ALLOW_PERSONAL_USAGE = "allow_personal_usage"
+ATTR_TOKEN_NAME = "token_name"
+ATTR_OPERATION_NAME = "operation_name"
+ATTR_ENTERPRISE_BODY = "enterprise_body"
+ATTR_UPDATE_MASK = "update_mask"
+ATTR_PARENT_FRAME_URL = "parent_frame_url"
+ATTR_ENABLED_FEATURES = "enabled_features"
 
 SET_POLICY_SCHEMA = vol.Schema(
     {
@@ -110,7 +127,11 @@ SET_KIOSK_POLICY_SCHEMA = vol.Schema(
 CREATE_ENROLLMENT_TOKEN_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_POLICY_NAME): cv.string,
+        vol.Optional(ATTR_POLICY_ID_TOKEN): cv.string,
         vol.Optional(ATTR_DURATION, default="86400s"): cv.string,
+        vol.Optional(ATTR_ONE_TIME_ONLY, default=False): cv.boolean,
+        vol.Optional(ATTR_ADDITIONAL_DATA): cv.string,
+        vol.Optional(ATTR_ALLOW_PERSONAL_USAGE): vol.In(ALLOW_PERSONAL_USAGE_VALUES),
     }
 )
 
@@ -193,6 +214,33 @@ RESET_PASSWORD_SCHEMA = vol.Schema(
         vol.Required(ATTR_DEVICE_ID): cv.string,
         vol.Optional(ATTR_NEW_PASSWORD): cv.string,
         vol.Optional(ATTR_RESET_PASSWORD_FLAGS): vol.Any(
+            cv.ensure_list(cv.string),
+            vol.All(cv.string, lambda x: [f.strip() for f in x.split(",") if f.strip()]),
+        ),
+    }
+)
+
+DELETE_ENROLLMENT_TOKEN_SCHEMA = vol.Schema(
+    {vol.Required(ATTR_TOKEN_NAME): cv.string}
+)
+
+GET_OPERATION_SCHEMA = vol.Schema(
+    {vol.Required(ATTR_OPERATION_NAME): cv.string}
+)
+
+GET_ENTERPRISE_SCHEMA = vol.Schema({})
+
+PATCH_ENTERPRISE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTERPRISE_BODY): vol.Any(dict, cv.string),
+        vol.Optional(ATTR_UPDATE_MASK): cv.string,
+    }
+)
+
+CREATE_WEB_TOKEN_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_PARENT_FRAME_URL): cv.string,
+        vol.Optional(ATTR_ENABLED_FEATURES): vol.Any(
             cv.ensure_list(cv.string),
             vol.All(cv.string, lambda x: [f.strip() for f in x.split(",") if f.strip()]),
         ),
@@ -318,10 +366,20 @@ async def async_register_services(hass: HomeAssistant) -> None:
         """Handle the create_enrollment_token service call."""
         coordinator = _get_coordinator(hass)
         policy_name: str | None = call.data.get(ATTR_POLICY_NAME)
+        policy_id: str | None = call.data.get(ATTR_POLICY_ID_TOKEN)
         duration: str = call.data.get(ATTR_DURATION, "86400s")
+        one_time_only: bool = call.data.get(ATTR_ONE_TIME_ONLY, False)
+        additional_data: str | None = call.data.get(ATTR_ADDITIONAL_DATA)
+        allow_personal_usage: str | None = call.data.get(ATTR_ALLOW_PERSONAL_USAGE)
 
         result = await coordinator.client.async_create_enrollment_token(
-            hass, policy_name=policy_name, duration=duration
+            hass,
+            policy_name=policy_name,
+            policy_id=policy_id,
+            duration=duration,
+            one_time_only=one_time_only,
+            additional_data=additional_data,
+            allow_personal_usage=allow_personal_usage,
         )
 
         hass.bus.async_fire(
@@ -500,6 +558,93 @@ async def async_register_services(hass: HomeAssistant) -> None:
         await coordinator.async_request_refresh()
         _LOGGER.info("Reset password command sent for device %s", device_name)
 
+    async def handle_list_policies(call: ServiceCall) -> None:
+        """Handle list_policies service call."""
+        coordinator = _get_coordinator(hass)
+        policies = await coordinator.client.async_list_policies(hass)
+        hass.bus.async_fire(
+            f"{DOMAIN}_policies_listed",
+            {"policies": [p.get("name", "") for p in policies], "count": len(policies)},
+        )
+        _LOGGER.info("Listed %d policies", len(policies))
+
+    async def handle_list_enrollment_tokens(call: ServiceCall) -> None:
+        """Handle list_enrollment_tokens service call."""
+        coordinator = _get_coordinator(hass)
+        tokens = await coordinator.client.async_list_enrollment_tokens(hass)
+        hass.bus.async_fire(
+            f"{DOMAIN}_enrollment_tokens_listed",
+            {"tokens": [t.get("name", "") for t in tokens], "count": len(tokens)},
+        )
+        _LOGGER.info("Listed %d enrollment tokens", len(tokens))
+
+    async def handle_delete_enrollment_token(call: ServiceCall) -> None:
+        """Handle delete_enrollment_token service call."""
+        coordinator = _get_coordinator(hass)
+        token_name = call.data[ATTR_TOKEN_NAME]
+        await coordinator.client.async_delete_enrollment_token(hass, token_name)
+        _LOGGER.info("Deleted enrollment token: %s", token_name)
+
+    async def handle_get_operation(call: ServiceCall) -> None:
+        """Handle get_operation service call."""
+        coordinator = _get_coordinator(hass)
+        operation_name = call.data[ATTR_OPERATION_NAME]
+        result = await coordinator.client.async_get_operation(hass, operation_name)
+        hass.bus.async_fire(
+            f"{DOMAIN}_operation_result",
+            {"operation_name": operation_name, "result": result},
+        )
+        _LOGGER.info("Retrieved operation: %s", operation_name)
+
+    async def handle_get_enterprise(call: ServiceCall) -> None:
+        """Handle get_enterprise service call."""
+        coordinator = _get_coordinator(hass)
+        result = await coordinator.client.async_get_enterprise(hass)
+        hass.bus.async_fire(
+            f"{DOMAIN}_enterprise_result",
+            {"enterprise": result},
+        )
+        _LOGGER.info("Retrieved enterprise: %s", result.get("name", ""))
+
+    async def handle_patch_enterprise(call: ServiceCall) -> None:
+        """Handle patch_enterprise service call."""
+        coordinator = _get_coordinator(hass)
+        body_raw = call.data[ATTR_ENTERPRISE_BODY]
+        body = (
+            json.loads(body_raw)
+            if isinstance(body_raw, str)
+            else body_raw
+        )
+        update_mask = call.data.get(ATTR_UPDATE_MASK)
+        await coordinator.client.async_patch_enterprise(
+            hass, body=body, update_mask=update_mask
+        )
+        _LOGGER.info("Enterprise patched successfully")
+
+    async def handle_create_web_token(call: ServiceCall) -> None:
+        """Handle create_web_token service call."""
+        coordinator = _get_coordinator(hass)
+        parent_frame_url = call.data.get(ATTR_PARENT_FRAME_URL)
+        enabled_features = call.data.get(ATTR_ENABLED_FEATURES)
+        if isinstance(enabled_features, str):
+            enabled_features = [
+                f.strip() for f in enabled_features.split(",") if f.strip()
+            ]
+        result = await coordinator.client.async_create_web_token(
+            hass,
+            parent_frame_url=parent_frame_url,
+            enabled_features=enabled_features,
+        )
+        hass.bus.async_fire(
+            f"{DOMAIN}_web_token_created",
+            {
+                "name": result.get("name", ""),
+                "value": result.get("value", ""),
+                "parent_frame_url": result.get("parentFrameUrl", ""),
+            },
+        )
+        _LOGGER.info("Web token created: %s", result.get("name", ""))
+
     hass.services.async_register(
         DOMAIN, SERVICE_SET_POLICY, handle_set_policy, schema=SET_POLICY_SCHEMA
     )
@@ -547,4 +692,40 @@ async def async_register_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN, SERVICE_RESET_PASSWORD, handle_reset_password, schema=RESET_PASSWORD_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_LIST_POLICIES, handle_list_policies
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_LIST_ENROLLMENT_TOKENS, handle_list_enrollment_tokens
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_ENROLLMENT_TOKEN,
+        handle_delete_enrollment_token,
+        schema=DELETE_ENROLLMENT_TOKEN_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_OPERATION,
+        handle_get_operation,
+        schema=GET_OPERATION_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_GET_ENTERPRISE,
+        handle_get_enterprise,
+        schema=GET_ENTERPRISE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_PATCH_ENTERPRISE,
+        handle_patch_enterprise,
+        schema=PATCH_ENTERPRISE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CREATE_WEB_TOKEN,
+        handle_create_web_token,
+        schema=CREATE_WEB_TOKEN_SCHEMA,
     )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -54,6 +53,69 @@ class AndroidManagementAPIClient:
     def enterprise_name(self) -> str:
         """Return the enterprise name."""
         return self._enterprise_name
+
+    async def async_get_enterprise(self, hass) -> dict[str, Any]:
+        """Get the enterprise resource (display name, logo, contact, signin, etc.)."""
+        return await hass.async_add_executor_job(self._get_enterprise)
+
+    def _get_enterprise(self) -> dict[str, Any]:
+        """Get enterprise (synchronous)."""
+        return (
+            self._service.enterprises()
+            .get(name=self._enterprise_name)
+            .execute()
+        )
+
+    async def async_patch_enterprise(
+        self,
+        hass,
+        body: dict[str, Any],
+        update_mask: str | None = None,
+    ) -> dict[str, Any]:
+        """Update enterprise (partial patch). update_mask is comma-separated field names."""
+        return await hass.async_add_executor_job(
+            self._patch_enterprise, body, update_mask
+        )
+
+    def _patch_enterprise(
+        self,
+        body: dict[str, Any],
+        update_mask: str | None = None,
+    ) -> dict[str, Any]:
+        """Patch enterprise (synchronous)."""
+        kwargs: dict[str, Any] = {"name": self._enterprise_name, "body": body}
+        if update_mask:
+            kwargs["updateMask"] = update_mask
+        return self._service.enterprises().patch(**kwargs).execute()
+
+    async def async_create_web_token(
+        self,
+        hass,
+        parent_frame_url: str | None = None,
+        enabled_features: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a web token for the embeddable managed Google Play iframe."""
+        return await hass.async_add_executor_job(
+            self._create_web_token, parent_frame_url, enabled_features
+        )
+
+    def _create_web_token(
+        self,
+        parent_frame_url: str | None = None,
+        enabled_features: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create web token (synchronous). parent_frame_url is required for iframe hosting."""
+        body: dict[str, Any] = {}
+        if parent_frame_url:
+            body["parentFrameUrl"] = parent_frame_url
+        if enabled_features:
+            body["enabledFeatures"] = enabled_features
+        return (
+            self._service.enterprises()
+            .webTokens()
+            .create(parent=self._enterprise_name, body=body)
+            .execute()
+        )
 
     async def async_list_devices(self, hass) -> list[dict[str, Any]]:
         """List all devices for the enterprise."""
@@ -204,24 +266,131 @@ class AndroidManagementAPIClient:
             self._service.enterprises().policies().get(name=name).execute()
         )
 
+    async def async_list_policies(self, hass) -> list[dict[str, Any]]:
+        """List all policies for the enterprise."""
+        return await hass.async_add_executor_job(self._list_policies)
+
+    def _list_policies(self) -> list[dict[str, Any]]:
+        """List all policies (synchronous)."""
+        policies: list[dict[str, Any]] = []
+        request = (
+            self._service.enterprises()
+            .policies()
+            .list(parent=self._enterprise_name)
+        )
+        while request is not None:
+            response = request.execute()
+            if "policies" in response:
+                policies.extend(response["policies"])
+            request = (
+                self._service.enterprises()
+                .policies()
+                .list_next(previous_request=request, previous_response=response)
+            )
+        return policies
+
+    async def async_list_enrollment_tokens(self, hass) -> list[dict[str, Any]]:
+        """List active enrollment tokens for the enterprise."""
+        return await hass.async_add_executor_job(self._list_enrollment_tokens)
+
+    def _list_enrollment_tokens(self) -> list[dict[str, Any]]:
+        """List enrollment tokens (synchronous)."""
+        tokens: list[dict[str, Any]] = []
+        request = (
+            self._service.enterprises()
+            .enrollmentTokens()
+            .list(parent=self._enterprise_name)
+        )
+        while request is not None:
+            response = request.execute()
+            if "enrollmentTokens" in response:
+                tokens.extend(response["enrollmentTokens"])
+            request = (
+                self._service.enterprises()
+                .enrollmentTokens()
+                .list_next(previous_request=request, previous_response=response)
+            )
+        return tokens
+
+    async def async_delete_enrollment_token(
+        self, hass, token_name: str
+    ) -> dict[str, Any]:
+        """Delete an enrollment token by full resource name."""
+        return await hass.async_add_executor_job(
+            self._delete_enrollment_token, token_name
+        )
+
+    def _delete_enrollment_token(self, token_name: str) -> dict[str, Any]:
+        """Delete an enrollment token (synchronous)."""
+        return (
+            self._service.enterprises()
+            .enrollmentTokens()
+            .delete(name=token_name)
+            .execute()
+        )
+
+    async def async_get_operation(
+        self, hass, operation_name: str
+    ) -> dict[str, Any]:
+        """Get status of a device operation (e.g. command)."""
+        return await hass.async_add_executor_job(
+            self._get_operation, operation_name
+        )
+
+    def _get_operation(self, operation_name: str) -> dict[str, Any]:
+        """Get operation (synchronous)."""
+        return (
+            self._service.enterprises()
+            .devices()
+            .operations()
+            .get(name=operation_name)
+            .execute()
+        )
+
     async def async_create_enrollment_token(
         self,
         hass,
         policy_name: str | None = None,
+        policy_id: str | None = None,
         duration: str = DEFAULT_TOKEN_DURATION,
+        one_time_only: bool = False,
+        additional_data: str | None = None,
+        allow_personal_usage: str | None = None,
     ) -> dict[str, Any]:
         """Create an enrollment token."""
         return await hass.async_add_executor_job(
-            self._create_enrollment_token, policy_name, duration
+            self._create_enrollment_token,
+            policy_name,
+            policy_id,
+            duration,
+            one_time_only,
+            additional_data,
+            allow_personal_usage,
         )
 
     def _create_enrollment_token(
-        self, policy_name: str | None = None, duration: str = DEFAULT_TOKEN_DURATION
+        self,
+        policy_name: str | None = None,
+        policy_id: str | None = None,
+        duration: str = DEFAULT_TOKEN_DURATION,
+        one_time_only: bool = False,
+        additional_data: str | None = None,
+        allow_personal_usage: str | None = None,
     ) -> dict[str, Any]:
         """Create an enrollment token (synchronous)."""
         body: dict[str, Any] = {"duration": duration}
         if policy_name:
             body["policyName"] = policy_name
+        elif policy_id:
+            body["policyName"] = f"{self._enterprise_name}/policies/{policy_id}"
+        if one_time_only:
+            body["oneTimeOnly"] = True
+        if additional_data is not None and additional_data != "":
+            if len(additional_data) > 1024:
+                raise ValueError("additionalData must be 1024 characters or less")
+            body["additionalData"] = additional_data
+        if allow_personal_usage is not None:
+            body["allowPersonalUsage"] = allow_personal_usage
         return (
             self._service.enterprises()
             .enrollmentTokens()
