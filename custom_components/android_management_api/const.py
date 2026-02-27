@@ -7,7 +7,6 @@ DOMAIN = "android_management_api"
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.BUTTON,
-    Platform.DEVICE_TRACKER,
     Platform.IMAGE,
 ]
 
@@ -22,6 +21,11 @@ CONF_ENTERPRISE_NAME = "enterprise_name"
 CONF_SERVICE_ACCOUNT_JSON = "service_account_json"
 CONF_AUTH_METHOD = "auth_method"
 CONF_FILE_PATH = "file_path"
+CONF_SCAN_INTERVAL = "scan_interval"
+CONF_DEFAULT_POLICY_ID = "default_policy_id"
+CONF_CLEAR_APP_DATA_PACKAGES = "clear_app_data_package_names"
 
 AUTH_METHOD_JSON = "json"
 AUTH_METHOD_FILE = "file"
+
+ALLOW_PERSONAL_USAGE_VALUES = ("PERSONAL_USAGE_ALLOWED", "PERSONAL_USAGE_DISALLOWED")

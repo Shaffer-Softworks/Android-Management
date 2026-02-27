@@ -42,6 +42,8 @@
         "title": "Android Management Policy Settings",
         "description": "Choose a category to configure, then select Apply Policy to push your settings to the enterprise.",
         "menu_options": {
+          "general": "General",
+          "enterprise": "Enterprise",
           "kiosk_app": "Kiosk App",
           "kiosk_ui": "Kiosk UI",
           "display": "Display",
@@ -52,6 +54,85 @@
           "device_reporting": "Device Reporting",
           "apply_policy": "Apply Policy"
         }
+      },
+      "general": {
+        "title": "General",
+        "description": "Scan interval and default policy for enrollment. Optional package names for the Clear app data button (one per line or comma-separated).",
+        "data": {
+          "scan_interval": "Scan interval (seconds)",
+          "default_policy_id": "Default policy ID (for enrollment QR)",
+          "clear_app_data_package_names": "Clear app data package names"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll the API for device updates (30–600). Reload the integration after changing.",
+          "default_policy_id": "Policy ID used when generating enrollment QR codes (e.g. policy1).",
+          "clear_app_data_package_names": "Package names used when pressing the Clear app data button on a device (e.g. com.example.app). Leave empty to use the service only."
+        }
+      },
+      "enterprise": {
+        "title": "Enterprise Settings",
+        "description": "Configure enterprise identity, notifications, contact info, terms and conditions, and sign-in details.",
+        "menu_options": {
+          "enterprise_identity": "Identity",
+          "enterprise_notifications": "Notifications",
+          "enterprise_contact": "Contact",
+          "enterprise_terms": "Terms & conditions",
+          "enterprise_signin": "Sign-in (provisioning)",
+          "apply_enterprise": "Apply to enterprise"
+        }
+      },
+      "enterprise_identity": {
+        "title": "Enterprise identity",
+        "description": "Display name, primary color (RGB as integer), and logo (URL + SHA-256 hash).",
+        "data": {
+          "enterprise_display_name": "Display name",
+          "enterprise_primary_color": "Primary color (0–16777215)",
+          "enterprise_logo_url": "Logo URL",
+          "enterprise_logo_sha256_hash": "Logo SHA-256 hash (base64)"
+        }
+      },
+      "enterprise_notifications": {
+        "title": "Enterprise notifications",
+        "description": "Pub/Sub topic and notification types (enrollment, status report, command, etc.).",
+        "data": {
+          "enterprise_pubsub_topic": "Pub/Sub topic",
+          "enterprise_enabled_notification_types": "Enabled notification types"
+        }
+      },
+      "enterprise_contact": {
+        "title": "Enterprise contact",
+        "description": "Contact email and data protection officer / EU representative details.",
+        "data": {
+          "enterprise_contact_email": "Contact email",
+          "enterprise_dpo_name": "Data protection officer name",
+          "enterprise_dpo_email": "Data protection officer email",
+          "enterprise_dpo_phone": "Data protection officer phone",
+          "enterprise_eu_rep_name": "EU representative name",
+          "enterprise_eu_rep_email": "EU representative email",
+          "enterprise_eu_rep_phone": "EU representative phone"
+        }
+      },
+      "enterprise_terms": {
+        "title": "Terms and conditions",
+        "description": "One terms page: header and HTML content shown during provisioning.",
+        "data": {
+          "enterprise_terms_header": "Terms header",
+          "enterprise_terms_content": "Terms content (HTML)"
+        }
+      },
+      "enterprise_signin": {
+        "title": "Sign-in (provisioning)",
+        "description": "Sign-in URL and options for device provisioning (one sign-in detail).",
+        "data": {
+          "enterprise_signin_url": "Sign-in URL",
+          "enterprise_signin_allow_personal_usage": "Allow personal usage",
+          "enterprise_signin_token_tag": "Token tag",
+          "enterprise_signin_default_status": "Default sign-in"
+        }
+      },
+      "apply_enterprise": {
+        "title": "Apply to enterprise",
+        "description": "Push the configured enterprise settings (identity, notifications, contact, terms, sign-in) to the API. Click Submit to apply."
       },
       "kiosk_app": {
         "title": "Kiosk App Settings",
@@ -192,7 +273,9 @@
       }
     },
     "error": {
-      "apply_failed": "Failed to apply the policy. Check logs for details."
+      "apply_failed": "Failed to apply the policy. Check logs for details.",
+      "enterprise_empty": "Configure at least one enterprise setting (Identity, Notifications, Contact, Terms, or Sign-in) before applying.",
+      "apply_enterprise_failed": "Failed to apply enterprise settings. Check logs for details."
     }
   }
 }

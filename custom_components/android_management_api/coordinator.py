@@ -18,12 +18,17 @@ _LOGGER = logging.getLogger(__name__)
 class AndroidManagementCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
     """Coordinator that polls the Android Management API for device data."""
 
-    def __init__(self, hass: HomeAssistant, client: AndroidManagementAPIClient) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        client: AndroidManagementAPIClient,
+        scan_interval: int = DEFAULT_SCAN_INTERVAL,
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=scan_interval),
         )
         self.client = client
 

@@ -221,11 +221,360 @@ create_enrollment_token:
       example: "enterprises/LC00t1kz5a/policies/policy1"
       selector:
         text:
+    policy_id:
+      name: Policy ID
+      description: Optional policy ID (e.g. "policy1") instead of full policy name. Ignored if policy_name is set.
+      required: false
+      example: "policy1"
+      selector:
+        text:
     duration:
       name: Duration
       description: Token validity duration (default 86400s = 24 hours).
       required: false
       default: "86400s"
       example: "86400s"
+      selector:
+        text:
+    one_time_only:
+      name: One Time Only
+      description: If true, only one device can use this token for registration.
+      required: false
+      default: false
+      selector:
+        boolean:
+    additional_data:
+      name: Additional Data
+      description: Optional data (max 1024 chars) stored on the device after enrollment (e.g. org unit ID).
+      required: false
+      selector:
+        text:
+    allow_personal_usage:
+      name: Allow Personal Usage
+      description: For company-owned devices; PERSONAL_USAGE_ALLOWED or PERSONAL_USAGE_DISALLOWED.
+      required: false
+      selector:
+        select:
+          options:
+            - "PERSONAL_USAGE_ALLOWED"
+            - "PERSONAL_USAGE_DISALLOWED"
+
+clear_app_data:
+  name: Clear App Data
+  description: Clear application data of specified apps on a device (Android 9+).
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name (enterprises/.../devices/...).
+      required: true
+      selector:
+        text:
+    package_names:
+      name: Package Names
+      description: Comma-separated or newline-separated list of app package names.
+      required: true
+      example: "com.example.app1, com.example.app2"
+      selector:
+        text:
+          multiline: true
+
+start_lost_mode:
+  name: Start Lost Mode
+  description: Put a device into lost mode (display message, contact info, etc.).
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    lost_message:
+      name: Lost Message
+      description: Message shown on the device when in lost mode.
+      required: false
+      selector:
+        text:
+    lost_phone_number:
+      name: Lost Phone Number
+      description: Phone number shown for the call owner button.
+      required: false
+      selector:
+        text:
+    lost_email:
+      name: Lost Email
+      description: Email address shown on the device.
+      required: false
+      selector:
+        text:
+    lost_street_address:
+      name: Lost Street Address
+      description: Street address shown on the device.
+      required: false
+      selector:
+        text:
+    lost_organization:
+      name: Lost Organization
+      description: Organization name shown on the device.
+      required: false
+      selector:
+        text:
+
+stop_lost_mode:
+  name: Stop Lost Mode
+  description: Take a device out of lost mode.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+
+patch_device:
+  name: Patch Device
+  description: Update device state, policy, or disabled reason.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    state:
+      name: State
+      description: Set device state to ACTIVE or DISABLED.
+      required: false
+      selector:
+        select:
+          options:
+            - "ACTIVE"
+            - "DISABLED"
+    policy_id:
+      name: Policy ID
+      description: Policy ID to apply to the device (e.g. "policy1").
+      required: false
+      selector:
+        text:
+    disabled_reason:
+      name: Disabled Reason
+      description: Message shown when device is disabled.
+      required: false
+      selector:
+        text:
+
+wipe:
+  name: Wipe Device
+  description: Wipe the device (factory reset or work profile removal). Command is sent; wipe occurs when device acknowledges.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    wipe_reason:
+      name: Wipe Reason
+      description: Optional message explaining the wipe.
+      required: false
+      selector:
+        text:
+    wipe_data_flags:
+      name: Wipe Data Flags
+      description: Optional comma-separated flags (e.g. WIPE_EXTERNAL_STORAGE).
+      required: false
+      selector:
+        text:
+
+add_esim:
+  name: Add eSIM
+  description: Add an eSIM profile to the device (Android 15+).
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    activation_code:
+      name: Activation Code
+      description: eSIM activation code.
+      required: true
+      selector:
+        text:
+    activation_state:
+      name: Activation State
+      description: ACTIVATED, NOT_ACTIVATED, or ACTIVATION_STATE_UNSPECIFIED.
+      required: false
+      default: "ACTIVATED"
+      selector:
+        select:
+          options:
+            - "ACTIVATION_STATE_UNSPECIFIED"
+            - "ACTIVATED"
+            - "NOT_ACTIVATED"
+
+remove_esim:
+  name: Remove eSIM
+  description: Remove an eSIM profile from the device (Android 15+).
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    icc_id:
+      name: ICC ID
+      description: ICC ID of the eSIM to remove.
+      required: true
+      selector:
+        text:
+
+request_device_info:
+  name: Request Device Info
+  description: Request device information (e.g. EID) from the device.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    device_info_type:
+      name: Device Info Type
+      description: Type of info to request (e.g. EID).
+      required: false
+      default: "EID"
+      selector:
+        select:
+          options:
+            - "DEVICE_INFO_UNSPECIFIED"
+            - "EID"
+
+issue_command:
+  name: Issue Command
+  description: Send a raw command to a device (REBOOT, LOCK, RESET_PASSWORD, WIPE, etc.) with optional params.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    command_type:
+      name: Command Type
+      description: Command type (e.g. REBOOT, LOCK, CLEAR_APP_DATA, START_LOST_MODE).
+      required: true
+      selector:
+        text:
+    command_params:
+      name: Command Params
+      description: Optional JSON object of command-specific parameters.
+      required: false
+      selector:
+        object:
+
+reset_password:
+  name: Reset Password
+  description: Reset device password; optionally set new password and/or flags.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID or full resource name.
+      required: true
+      selector:
+        text:
+    new_password:
+      name: New Password
+      description: Optional new password (min 6 characters if numeric on Android 14).
+      required: false
+      selector:
+        text:
+    reset_password_flags:
+      name: Reset Password Flags
+      description: Optional comma-separated flags (REQUIRE_ENTRY, DO_NOT_ASK_CREDENTIALS_ON_BOOT, LOCK_NOW).
+      required: false
+      selector:
+        text:
+
+list_policies:
+  name: List Policies
+  description: List all policies for the enterprise. Fires android_management_api_policies_listed with policies list.
+
+list_enrollment_tokens:
+  name: List Enrollment Tokens
+  description: List active enrollment tokens. Fires android_management_api_enrollment_tokens_listed with tokens list.
+
+delete_enrollment_token:
+  name: Delete Enrollment Token
+  description: Delete an enrollment token by its full resource name.
+  fields:
+    token_name:
+      name: Token Name
+      description: Full resource name (e.g. enterprises/LC00t1kz5a/enrollmentTokens/...).
+      required: true
+      selector:
+        text:
+
+get_operation:
+  name: Get Operation
+  description: Get status of a device operation (e.g. after issuing a command). Fires android_management_api_operation_result with the result.
+  fields:
+    operation_name:
+      name: Operation Name
+      description: Full operation resource name (returned when issuing a command).
+      required: true
+      selector:
+        text:
+
+get_enterprise:
+  name: Get Enterprise
+  description: >-
+    Get the enterprise resource (display name, logo, primary color, contact info,
+    sign-in details, terms, Pub/Sub topic, etc.). Fires android_management_api_enterprise_result with the result.
+  fields: {}
+
+patch_enterprise:
+  name: Patch Enterprise
+  description: Update enterprise settings (display name, logo, contactInfo, signinDetails, termsAndConditions, pubsubTopic, etc.).
+  fields:
+    enterprise_body:
+      name: Enterprise Body (JSON)
+      description: >-
+        JSON object with fields to update (e.g. enterpriseDisplayName, primaryColor,
+        contactInfo, logo with url/sha256Hash). Only include fields you want to change.
+      required: true
+      example: '{"enterpriseDisplayName": "My Company", "primaryColor": 255}'
+      selector:
+        text:
+          multiline: true
+    update_mask:
+      name: Update Mask
+      description: >-
+        Optional comma-separated list of field names to update (e.g. enterpriseDisplayName,primaryColor).
+        If omitted, all provided fields are updated.
+      required: false
+      selector:
+        text:
+
+create_web_token:
+  name: Create Web Token
+  description: >-
+    Create a web token to access the embeddable managed Google Play iframe.
+    Fires android_management_api_web_token_created with name, value, and parent_frame_url.
+  fields:
+    parent_frame_url:
+      name: Parent Frame URL
+      description: >-
+        HTTPS URL of the page that will host the iframe (required for iframe; token is restricted to this URL).
+      required: false
+      selector:
+        text:
+    enabled_features:
+      name: Enabled Features
+      description: >-
+        Optional comma-separated list of iframe features (PLAY_SEARCH, PRIVATE_APPS, WEB_APPS,
+        STORE_BUILDER, MANAGED_CONFIGURATIONS, ZERO_TOUCH_CUSTOMER_MANAGEMENT). Leave empty for all.
+      required: false
       selector:
         text:
