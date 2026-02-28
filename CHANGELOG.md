@@ -5,6 +5,27 @@ All notable changes to the Android Management API integration for Home Assistant
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-02-27
+
+### Added
+
+- **Refresh service** (`android_management_api.refresh`): Manually refresh the device list from the API (Developer Tools → Services).
+- **Refresh on Configure**: Device list is refetched when you open the integration’s Configure screen.
+- **API retry**: All API requests retry up to 3 times on transient SSL or network errors (e.g. record layer failure, timeout). Retry messages log at DEBUG so successful retries don’t clutter the log.
+
+### Fixed
+
+- **Enterprise contact**: Contact info cannot be updated via the Android Management API (Google returns 400). The integration no longer sends `contactInfo` in enterprise patch requests. The Enterprise contact step has been removed from the options menu; manage contact details in the Google Admin console.
+- **Device list not updating**: Coordinator now keeps a permanent listener so periodic refresh is always scheduled. Stale devices (no longer returned by the API) are removed from the device and entity registries on startup and when the coordinator updates. New devices get sensors and buttons without reloading the integration.
+- **UnboundLocalError** in sensor/button platform sync when updating the device list (fixed by using `set.intersection_update()` instead of `&=` in closure).
+
+### Changed
+
+- Scan interval is coerced to `int` when creating the coordinator.
+- Service descriptions updated to note that contact info must be managed in Google Admin console.
+
+---
+
 ## [0.1.5] - 2026-02-27
 
 ### Added
@@ -73,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Home Assistant 2024.4.0 or newer.
   - HACS 1.34.0 or newer (when installed via HACS).
 
+[0.1.6]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.6
 [0.1.5]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.5
 [0.1.1]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Shaffer-Softworks/Android-Management/releases/tag/v0.1.0
