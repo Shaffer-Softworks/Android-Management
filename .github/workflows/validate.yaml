@@ -35,5 +35,3 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-          # Keep ignore: brands — HA no longer accept PRs for custom integrations in home-assistant/brands; we ship brands in-repo (custom_components/.../brand/)
-          ignore: brands
