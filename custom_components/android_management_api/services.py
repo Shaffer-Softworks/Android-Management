@@ -36,6 +36,7 @@ SERVICE_GET_OPERATION = "get_operation"
 SERVICE_GET_ENTERPRISE = "get_enterprise"
 SERVICE_PATCH_ENTERPRISE = "patch_enterprise"
 SERVICE_CREATE_WEB_TOKEN = "create_web_token"
+SERVICE_REFRESH = "refresh"
 
 ATTR_DEVICE_ID = "device_id"
 ATTR_POLICY_ID = "policy_id"
@@ -271,6 +272,15 @@ async def async_register_services(hass: HomeAssistant) -> None:
 
     if hass.services.has_service(DOMAIN, SERVICE_SET_POLICY):
         return
+
+    async def handle_refresh(call: ServiceCall) -> None:
+        """Refresh the device list from the Android Management API."""
+        coordinator = _get_coordinator(hass)
+        await coordinator.async_request_refresh()
+        _LOGGER.info(
+            "Device list refreshed: %s device(s)",
+            len(coordinator.data),
+        )
 
     async def handle_set_policy(call: ServiceCall) -> None:
         """Handle the set_policy service call."""
@@ -729,3 +739,4 @@ async def async_register_services(hass: HomeAssistant) -> None:
         handle_create_web_token,
         schema=CREATE_WEB_TOKEN_SCHEMA,
     )
+    hass.services.async_register(DOMAIN, SERVICE_REFRESH, handle_refresh)

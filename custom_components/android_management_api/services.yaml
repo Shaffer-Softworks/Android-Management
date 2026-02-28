@@ -536,13 +536,13 @@ get_enterprise:
 
 patch_enterprise:
   name: Patch Enterprise
-  description: Update enterprise settings (display name, logo, contactInfo, signinDetails, termsAndConditions, pubsubTopic, etc.).
+  description: Update enterprise settings (display name, logo, signinDetails, termsAndConditions, pubsubTopic, etc.). Contact info must be managed in Google Admin console, not via this API.
   fields:
     enterprise_body:
       name: Enterprise Body (JSON)
       description: >-
         JSON object with fields to update (e.g. enterpriseDisplayName, primaryColor,
-        contactInfo, logo with url/sha256Hash). Only include fields you want to change.
+        logo with url/sha256Hash). Do not include contactInfo; manage that in Google Admin console. Only include fields you want to change.
       required: true
       example: '{"enterpriseDisplayName": "My Company", "primaryColor": 255}'
       selector:
@@ -578,3 +578,10 @@ create_web_token:
       required: false
       selector:
         text:
+
+refresh:
+  name: Refresh Device List
+  description: >-
+    Fetch the latest device list from the Android Management API now. Use this if
+    the device list is not updating automatically (e.g. after enrolling a new device).
+  fields: {}
