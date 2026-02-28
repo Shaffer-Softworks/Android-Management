@@ -14,6 +14,8 @@ from homeassistant.components.button import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -155,9 +157,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up button entities from a config entry."""
     coordinator = entry.runtime_data
+    # Track device IDs we've already created entities for (so we can add new ones on coordinator update)
+    device_ids_seen: set[str] = set()
 
     entities: list[AndroidManagementButton] = []
     for device_id in coordinator.data:
+        device_ids_seen.add(device_id)
         for description in BUTTON_DESCRIPTIONS:
             entities.append(
                 AndroidManagementButton(
@@ -166,6 +171,30 @@ async def async_setup_entry(
             )
 
     async_add_entities(entities)
+
+    async def _sync_button_entities() -> None:
+        """Add entities for new devices; device removal is done by sensor platform."""
+        current_ids = set(coordinator.data)
+        # Add entities for new devices
+        new_entities: list[AndroidManagementButton] = []
+        for device_id in current_ids:
+            if device_id not in device_ids_seen:
+                device_ids_seen.add(device_id)
+                for description in BUTTON_DESCRIPTIONS:
+                    new_entities.append(
+                        AndroidManagementButton(
+                            coordinator, device_id, description, entry
+                        )
+                    )
+        if new_entities:
+            async_add_entities(new_entities)
+        # Keep device_ids_seen in sync with current API list
+        device_ids_seen.intersection_update(current_ids)
+
+    def _on_coordinator_update() -> None:
+        hass.async_create_task(_sync_button_entities())
+
+    coordinator.async_add_listener(_on_coordinator_update)
 
 
 class AndroidManagementButton(

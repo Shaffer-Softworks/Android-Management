@@ -37,13 +37,24 @@ class AndroidManagementCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any
         try:
             devices = await self.client.async_list_devices(self.hass)
         except Exception as err:
-            raise UpdateFailed(f"Error communicating with Android Management API: {err}") from err
+            _LOGGER.warning(
+                "Android Management API refresh failed (data will not update until next success): %s",
+                err,
+            )
+            raise UpdateFailed(
+                f"Error communicating with Android Management API: {err}"
+            ) from err
 
         result: dict[str, dict[str, Any]] = {}
         for device in devices:
             name: str = device.get("name", "")
             device_id = name.rsplit("/", 1)[-1] if "/" in name else name
             result[device_id] = device
+        _LOGGER.debug(
+            "Device list updated: %s device(s), next refresh in %ss",
+            len(result),
+            self.update_interval.total_seconds() if self.update_interval else 0,
+        )
         return result
 
     def get_device_id(self, device_name: str) -> str:

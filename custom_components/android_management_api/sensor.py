@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
+
+_LOGGER = logging.getLogger(__name__)
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -12,6 +15,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -325,15 +330,94 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensor entities from a config entry."""
     coordinator = entry.runtime_data
+    # Track device IDs we've already created entities for (so we can add new ones on coordinator update).
+    # Seed from device registry so we know about stale devices (no longer in API) and can remove them on first refresh.
+    device_ids_seen: set[str] = set()
+    dev_reg = dr.async_get(hass)
+    for device in getattr(dev_reg, "_devices", {}).values():
+        if entry.entry_id not in device.config_entries:
+            continue
+        for did in device.identifiers:
+            if did[0] == DOMAIN and (
+                "/" not in did[1] or not did[1].startswith("enterprises/")
+            ):
+                device_ids_seen.add(did[1])
+                break
 
     entities: list[AndroidManagementSensor] = []
     for device_id, device_data in coordinator.data.items():
+        device_ids_seen.add(device_id)
         for description in SENSOR_DESCRIPTIONS:
             entities.append(
                 AndroidManagementSensor(coordinator, device_id, description)
             )
 
     async_add_entities(entities)
+
+    async def _sync_sensor_entities() -> None:
+        """Add entities for new devices and remove devices no longer in the API."""
+        current_ids = set(coordinator.data)
+        # Add entities for new devices
+        new_entities: list[AndroidManagementSensor] = []
+        for device_id in current_ids:
+            if device_id not in device_ids_seen:
+                device_ids_seen.add(device_id)
+                for description in SENSOR_DESCRIPTIONS:
+                    new_entities.append(
+                        AndroidManagementSensor(
+                            coordinator, device_id, description
+                        )
+                    )
+        if new_entities:
+            async_add_entities(new_entities)
+        # Remove devices no longer in the API (before we shrink device_ids_seen)
+        removed_ids = device_ids_seen - current_ids
+        dev_reg = dr.async_get(hass)
+        if removed_ids:
+            for device_id in removed_ids:
+                device = dev_reg.async_get_device(
+                    identifiers={(DOMAIN, device_id)}
+                )
+                if device:
+                    _LOGGER.info(
+                        "Removing device no longer in API: %s",
+                        device_id,
+                    )
+                    dev_reg.async_remove_device(device.id)
+        # Also walk registry if available (handles devices that never made it into device_ids_seen)
+        get_entries = getattr(
+            dev_reg, "async_entries_for_config_entry", None
+        )
+        if get_entries:
+            try:
+                entries = await get_entries(entry.entry_id)
+            except TypeError:
+                entries = get_entries(entry.entry_id)
+            for device in entries or []:
+                for did in device.identifiers:
+                    if did[0] != DOMAIN:
+                        continue
+                    device_id = did[1]
+                    if "/" in device_id and device_id.startswith("enterprises/"):
+                        break
+                    if device_id not in current_ids:
+                        device = dev_reg.async_get_device(
+                            identifiers={(DOMAIN, device_id)}
+                        )
+                        if device:
+                            _LOGGER.info(
+                                "Removing device no longer in API: %s",
+                                device_id,
+                            )
+                            dev_reg.async_remove_device(device.id)
+                    break
+        # Keep device_ids_seen in sync with current API list
+        device_ids_seen.intersection_update(current_ids)
+
+    def _on_coordinator_update() -> None:
+        hass.async_create_task(_sync_sensor_entities())
+
+    coordinator.async_add_listener(_on_coordinator_update)
 
 
 class AndroidManagementSensor(

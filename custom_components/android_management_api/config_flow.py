@@ -769,25 +769,10 @@ def _build_enterprise_patch_body(options: dict[str, Any]) -> dict[str, Any]:
     if isinstance(types_, list) and types_:
         body["enabledNotificationTypes"] = types_
 
-    # Contact
-    contact_email = (options.get("enterprise_contact_email") or "").strip()
-    dpo_name = (options.get("enterprise_dpo_name") or "").strip()
-    dpo_email = (options.get("enterprise_dpo_email") or "").strip()
-    dpo_phone = (options.get("enterprise_dpo_phone") or "").strip()
-    eu_name = (options.get("enterprise_eu_rep_name") or "").strip()
-    eu_email = (options.get("enterprise_eu_rep_email") or "").strip()
-    eu_phone = (options.get("enterprise_eu_rep_phone") or "").strip()
-    if any([contact_email, dpo_name, dpo_email, dpo_phone, eu_name, eu_email, eu_phone]):
-        body["contactInfo"] = {
-            "contactEmail": contact_email or None,
-            "dataProtectionOfficerName": dpo_name or None,
-            "dataProtectionOfficerEmail": dpo_email or None,
-            "dataProtectionOfficerPhone": dpo_phone or None,
-            "euRepresentativeName": eu_name or None,
-            "euRepresentativeEmail": eu_email or None,
-            "euRepresentativePhone": eu_phone or None,
-        }
-        body["contactInfo"] = {k: v for k, v in body["contactInfo"].items() if v}
+    # Contact info is not included: the Android Management API returns 400 with
+    # "Contact info cannot be updated for your enterprise via Android Management API.
+    # Please manage your enterprise's contact info via Google Admin console."
+    # The contact step remains in the flow for display/consistency only.
 
     # Terms (one term: header + content)
     terms_header = (options.get("enterprise_terms_header") or "").strip()
@@ -857,6 +842,12 @@ class AndroidManagementOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        # Refetch device list when user opens the integration (Configure)
+        if (
+            hasattr(self.config_entry, "runtime_data")
+            and self.config_entry.runtime_data is not None
+        ):
+            await self.config_entry.runtime_data.async_request_refresh()
         if not self._policy_fetched:
             self._policy_fetched = True
             await self._fetch_live_policy()
@@ -984,7 +975,6 @@ class AndroidManagementOptionsFlow(OptionsFlow):
             menu_options=[
                 "enterprise_identity",
                 "enterprise_notifications",
-                "enterprise_contact",
                 "enterprise_terms",
                 "enterprise_signin",
                 "apply_enterprise",

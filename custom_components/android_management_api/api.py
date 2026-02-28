@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import ssl
+import time
 from typing import Any
 
 from google.oauth2 import service_account
@@ -49,6 +51,27 @@ class AndroidManagementAPIClient:
             cache_discovery=False,
         )
 
+    def _execute_request(self, request, max_retries: int = 3):
+        """Execute a Google API request with retries for transient SSL/network errors."""
+        last_err = None
+        for attempt in range(max_retries):
+            try:
+                return request.execute()
+            except (ssl.SSLError, OSError, ConnectionError) as e:
+                last_err = e
+                if attempt < max_retries - 1:
+                    _LOGGER.debug(
+                        "Request failed (attempt %s/%s): %s; retrying in %ss",
+                        attempt + 1,
+                        max_retries,
+                        e,
+                        attempt + 1,
+                    )
+                    time.sleep(attempt + 1)
+                else:
+                    raise last_err from e
+        raise last_err
+
     @property
     def enterprise_name(self) -> str:
         """Return the enterprise name."""
@@ -60,10 +83,8 @@ class AndroidManagementAPIClient:
 
     def _get_enterprise(self) -> dict[str, Any]:
         """Get enterprise (synchronous)."""
-        return (
-            self._service.enterprises()
-            .get(name=self._enterprise_name)
-            .execute()
+        return self._execute_request(
+            self._service.enterprises().get(name=self._enterprise_name)
         )
 
     async def async_patch_enterprise(
@@ -86,7 +107,7 @@ class AndroidManagementAPIClient:
         kwargs: dict[str, Any] = {"name": self._enterprise_name, "body": body}
         if update_mask:
             kwargs["updateMask"] = update_mask
-        return self._service.enterprises().patch(**kwargs).execute()
+        return self._execute_request(self._service.enterprises().patch(**kwargs))
 
     async def async_create_web_token(
         self,
@@ -110,11 +131,10 @@ class AndroidManagementAPIClient:
             body["parentFrameUrl"] = parent_frame_url
         if enabled_features:
             body["enabledFeatures"] = enabled_features
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .webTokens()
             .create(parent=self._enterprise_name, body=body)
-            .execute()
         )
 
     async def async_list_devices(self, hass) -> list[dict[str, Any]]:
@@ -130,7 +150,7 @@ class AndroidManagementAPIClient:
             .list(parent=self._enterprise_name)
         )
         while request is not None:
-            response = request.execute()
+            response = self._execute_request(request)
             if "devices" in response:
                 devices.extend(response["devices"])
             request = (
@@ -148,11 +168,8 @@ class AndroidManagementAPIClient:
 
     def _get_device(self, device_name: str) -> dict[str, Any]:
         """Get a single device (synchronous)."""
-        return (
-            self._service.enterprises()
-            .devices()
-            .get(name=device_name)
-            .execute()
+        return self._execute_request(
+            self._service.enterprises().devices().get(name=device_name)
         )
 
     async def async_issue_command(
@@ -168,11 +185,10 @@ class AndroidManagementAPIClient:
     ) -> dict[str, Any]:
         """Issue a command (synchronous)."""
         body: dict[str, Any] = {"type": command_type, **extra}
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .devices()
             .issueCommand(name=device_name, body=body)
-            .execute()
         )
 
     async def async_patch_device(
@@ -203,11 +219,10 @@ class AndroidManagementAPIClient:
             body["policyName"] = policy_name
         if disabled_reason is not None:
             body["disabledReason"] = disabled_reason
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .devices()
             .patch(name=device_name, body=body, updateMask=",".join(body.keys()))
-            .execute()
         )
 
     async def async_delete_device(
@@ -228,8 +243,8 @@ class AndroidManagementAPIClient:
         kwargs: dict[str, Any] = {"name": device_name}
         if wipe_data_flags:
             kwargs["wipeDataFlags"] = wipe_data_flags
-        return (
-            self._service.enterprises().devices().delete(**kwargs).execute()
+        return self._execute_request(
+            self._service.enterprises().devices().delete(**kwargs)
         )
 
     async def async_set_policy(
@@ -246,11 +261,10 @@ class AndroidManagementAPIClient:
         """Set a policy (synchronous)."""
         name = f"{self._enterprise_name}/policies/{policy_id}"
         body = policy_body or {}
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .policies()
             .patch(name=name, body=body)
-            .execute()
         )
 
     async def async_get_policy(
@@ -262,8 +276,8 @@ class AndroidManagementAPIClient:
     def _get_policy(self, policy_id: str) -> dict[str, Any]:
         """Get a policy (synchronous)."""
         name = f"{self._enterprise_name}/policies/{policy_id}"
-        return (
-            self._service.enterprises().policies().get(name=name).execute()
+        return self._execute_request(
+            self._service.enterprises().policies().get(name=name)
         )
 
     async def async_list_policies(self, hass) -> list[dict[str, Any]]:
@@ -279,7 +293,7 @@ class AndroidManagementAPIClient:
             .list(parent=self._enterprise_name)
         )
         while request is not None:
-            response = request.execute()
+            response = self._execute_request(request)
             if "policies" in response:
                 policies.extend(response["policies"])
             request = (
@@ -302,7 +316,7 @@ class AndroidManagementAPIClient:
             .list(parent=self._enterprise_name)
         )
         while request is not None:
-            response = request.execute()
+            response = self._execute_request(request)
             if "enrollmentTokens" in response:
                 tokens.extend(response["enrollmentTokens"])
             request = (
@@ -322,11 +336,10 @@ class AndroidManagementAPIClient:
 
     def _delete_enrollment_token(self, token_name: str) -> dict[str, Any]:
         """Delete an enrollment token (synchronous)."""
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .enrollmentTokens()
             .delete(name=token_name)
-            .execute()
         )
 
     async def async_get_operation(
@@ -339,12 +352,11 @@ class AndroidManagementAPIClient:
 
     def _get_operation(self, operation_name: str) -> dict[str, Any]:
         """Get operation (synchronous)."""
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .devices()
             .operations()
             .get(name=operation_name)
-            .execute()
         )
 
     async def async_create_enrollment_token(
@@ -391,9 +403,8 @@ class AndroidManagementAPIClient:
             body["additionalData"] = additional_data
         if allow_personal_usage is not None:
             body["allowPersonalUsage"] = allow_personal_usage
-        return (
+        return self._execute_request(
             self._service.enterprises()
             .enrollmentTokens()
             .create(parent=self._enterprise_name, body=body)
-            .execute()
         )
