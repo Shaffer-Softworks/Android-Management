@@ -4,6 +4,8 @@
 
 [![Validate](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml)
 [![CodeQL](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql)
+[![Active installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=active%20installs&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.android_management_api.total)](https://github.com/Shaffer-Softworks/Android-Management)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/Shaffer-Softworks/Android-Management)
 
 Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
