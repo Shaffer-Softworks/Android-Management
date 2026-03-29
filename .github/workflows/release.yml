@@ -27,30 +27,20 @@ permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: create-release-${{ github.repository }}-${{ github.event.inputs.version }}
-  cancel-in-progress: false
-
 jobs:
-  release:
+  normalize:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      branch: ${{ steps.meta.outputs.branch }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          fetch-depth: 0
-
-      - name: Bump manifest, push release branch, publish release, open PR
+      - id: meta
         env:
-          GH_TOKEN: ${{ github.token }}
-          RAW_VERSION: ${{ github.event.inputs.version }}
-          INPUT_DRAFT: ${{ github.event.inputs.draft }}
-          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
-          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RAW: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
-          VERSION="${RAW_VERSION#v}"
+          VERSION="${RAW#v}"
           if [ -z "$VERSION" ]; then
             echo "::error::version is empty"
             exit 1
@@ -61,6 +51,34 @@ jobs:
           fi
           TAG="v${VERSION}"
           BRANCH="release/${TAG}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: normalize
+    runs-on: ubuntu-latest
+    concurrency:
+      group: create-release-${{ github.repository }}-${{ needs.normalize.outputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Bump manifest, push release branch, publish release, open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.normalize.outputs.version }}
+          TAG: ${{ needs.normalize.outputs.tag }}
+          BRANCH: ${{ needs.normalize.outputs.branch }}
+          INPUT_DRAFT: ${{ github.event.inputs.draft }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
+          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
