@@ -1,0 +1,50 @@
+name: Sync manifest version on release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Update manifest version
+        env:
+          MANIFEST_VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          python3 << 'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          raw = os.environ["MANIFEST_VERSION"]
+          version = raw[1:] if raw.startswith("v") else raw
+
+          path = Path("custom_components/android_management_api/manifest.json")
+          with path.open(encoding="utf-8") as f:
+              data = json.load(f)
+          data["version"] = version
+          text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Commit and push
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add custom_components/android_management_api/manifest.json
+          if git diff --staged --quiet; then
+            echo "Manifest version already matches release; nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore: sync manifest version to release ${TAG_NAME}"
+          git push
