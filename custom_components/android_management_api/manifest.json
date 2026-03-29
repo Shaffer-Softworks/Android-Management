@@ -1,16 +1,20 @@
 {
   "domain": "android_management_api",
   "name": "Android Management API",
-  "codeowners": ["@Shaffer-Softworks"],
+  "codeowners": [
+    "@Shaffer-Softworks"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/Shaffer-Softworks/Android-Management#readme",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Shaffer-Softworks/Android-Management/issues",
-  "loggers": ["android_management_api"],
+  "loggers": [
+    "android_management_api"
+  ],
   "requirements": [
     "google-api-python-client==2.159.0",
     "google-auth==2.37.0",
     "qrcode==8.0"
   ],
-  "version": "0.1.7"
+  "version": "0.1.8"
 }
