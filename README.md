@@ -5,7 +5,7 @@
 [![Validate](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/validate.yaml)
 [![CodeQL](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Shaffer-Softworks/Android-Management/actions/workflows/github-code-scanning/codeql)
 [![Active installs](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=active%20installs&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.android_management_api.total)](https://github.com/Shaffer-Softworks/Android-Management)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/Shaffer-Softworks/Android-Management)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
 
 Manage your Android devices directly from Home Assistant using [Google's Android Management API](https://developers.google.com/android/management).
 
@@ -38,23 +38,17 @@ Enrolling devices with Android Management (and the built-in Device Policy Contro
 - **Enrollment Token Service**: Use the `create_enrollment_token` service to programmatically generate enrollment tokens (fires an event with the full token data).
 - **Flexible Authentication**: Authenticate with a pasted service account JSON key or a file path on disk.
 
-## Prerequisites
-
-- A **Google Cloud project** with the [Android Management API](https://developers.google.com/android/management) enabled.
-- A **service account** with appropriate permissions and a downloaded JSON key file.
-- An **enterprise** already created via the Android Management API (you will need the enterprise resource name, e.g. `enterprises/LC00t1kz5a`).
-
 ## Installation
 
 ### Using HACS
 
-1. Add <https://github.com/Shaffer-Softworks/Android-Management> to your [HACS](https://hacs.xyz/) custom repositories.
-1. Choose `Integration` from the category selection.
-1. Click install.
-1. Return to the Integrations page within HACS then click the `+ Explore & download repositories` button.
-1. Search for `Android Management API`, select it, then click `Download this repository with HACS`.
-1. Restart Home Assistant to load the integration.
-1. Visit the Wiki for information regarding:
+This integration is made available through the Home Assistant Community Store default feed. Simply search for **Android Management** and install it directly from HACS.
+
+Please see the [official HACS documentation](https://hacs.xyz/docs/) for information on how to install and use HACS.
+
+Restart Home Assistant after installation. For setup and troubleshooting, see the [project wiki](https://github.com/Shaffer-Softworks/Android-Management/wiki).
+
+Visit the Wiki for information regarding:
     - [Initial Setup](https://github.com/Shaffer-Softworks/Android-Management/wiki#initial-setup)
     - [Post-setup Advice](https://github.com/Shaffer-Softworks/Android-Management/wiki#post-setup-advice)
     - [Debug Logging](https://github.com/Shaffer-Softworks/Android-Management/wiki#debug-logging)
@@ -65,6 +59,12 @@ Enrolling devices with Android Management (and the built-in Device Policy Contro
 - Restart Home Assistant to load the integration.
 
 **Dependencies**: This integration requires `google-api-python-client==2.159.0`, `google-auth==2.37.0`, and `qrcode==8.0`. When installing via HACS, packages are installed automatically. For manual installation, ensure your Home Assistant environment has these packages available.
+
+## Prerequisites
+
+- A **Google Cloud project** with the [Android Management API](https://developers.google.com/android/management) enabled.
+- A **service account** with appropriate permissions and a downloaded JSON key file.
+- An **enterprise** already created via the Android Management API (you will need the enterprise resource name, e.g. `enterprises/LC00t1kz5a`).
 
 ## Configuration
 
