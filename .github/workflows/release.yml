@@ -136,11 +136,15 @@ jobs:
           if [ "$INPUT_DRAFT" = "true" ]; then EXTRA+=(--draft); fi
           if [ "$INPUT_PRERELEASE" = "true" ]; then EXTRA+=(--prerelease); fi
 
+          # HACS zip_release (hacs.json filename) — single top-level integration folder for extract into custom_components
+          rm -f android_management_api.zip
+          ( cd custom_components && zip -qr ../android_management_api.zip android_management_api )
+
           if [ -n "$RELEASE_NOTES" ]; then
             printf '%s\n' "$RELEASE_NOTES" > /tmp/release-notes.md
-            gh release create "$TAG" --target "$BRANCH" --title "$TAG" -F /tmp/release-notes.md "${EXTRA[@]}"
+            gh release create "$TAG" android_management_api.zip --target "$BRANCH" --title "$TAG" -F /tmp/release-notes.md "${EXTRA[@]}"
           else
-            gh release create "$TAG" --target "$BRANCH" --title "$TAG" --generate-notes "${EXTRA[@]}"
+            gh release create "$TAG" android_management_api.zip --target "$BRANCH" --title "$TAG" --generate-notes "${EXTRA[@]}"
           fi
 
           if [ "$(gh pr list --head "$BRANCH" --state open --json number -q 'length')" -eq 0 ]; then
