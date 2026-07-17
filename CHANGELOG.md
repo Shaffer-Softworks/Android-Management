@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-17
+
 ### Added
 
 - **Policy Options** for 2025–2026 Android Management API fields: application roles, `CUSTOM` install type + signing key cert, autofill, enterprise display name visibility, app functions, private space, wipe data flags, private DNS, Bluetooth sharing, user-initiated eSIM add, application/default-app reporting toggles, and optional JSON for APN / preferential network / Wi-Fi roaming / default application settings.

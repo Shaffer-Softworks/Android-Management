@@ -4,9 +4,9 @@ Use the section below when creating a new [GitHub Release](https://github.com/Sh
 
 ---
 
-## Unreleased (draft)
+## v1.0.0 (2026-07-17)
 
-Android Management API 2025–H1 2026 surface: new policy Options fields, policy-application services, buttons/sensors, and client library bumps.
+First major release: Android Management API 2025–H1 2026 surface — new policy Options fields, policy-application services, buttons/sensors, and client library bumps.
 
 ### Changes
 
