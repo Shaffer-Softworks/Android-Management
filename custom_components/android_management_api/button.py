@@ -98,6 +98,48 @@ async def _clear_app_data(
     )
 
 
+async def _wipe_command(
+    hass: HomeAssistant, client: AndroidManagementAPIClient, device_name: str
+) -> None:
+    """Issue WIPE command (distinct from Factory Reset delete)."""
+    await client.async_issue_command(hass, device_name, "WIPE", wipeParams={})
+
+
+async def _start_lost_mode(
+    hass: HomeAssistant, client: AndroidManagementAPIClient, device_name: str
+) -> None:
+    await client.async_issue_command(
+        hass,
+        device_name,
+        "START_LOST_MODE",
+        startLostModeParams={
+            "lostMessage": {
+                "defaultMessage": "Device reported lost",
+                "localizedMessages": {},
+            }
+        },
+    )
+
+
+async def _stop_lost_mode(
+    hass: HomeAssistant, client: AndroidManagementAPIClient, device_name: str
+) -> None:
+    await client.async_issue_command(
+        hass, device_name, "STOP_LOST_MODE", stopLostModeParams={}
+    )
+
+
+async def _request_device_info(
+    hass: HomeAssistant, client: AndroidManagementAPIClient, device_name: str
+) -> None:
+    await client.async_issue_command(
+        hass,
+        device_name,
+        "REQUEST_DEVICE_INFO",
+        requestDeviceInfoParams={"deviceInfo": "EID"},
+    )
+
+
 BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
     AndroidManagementButtonDescription(
         key="reboot",
@@ -146,6 +188,34 @@ BUTTON_DESCRIPTIONS: tuple[AndroidManagementButtonDescription, ...] = (
         icon="mdi:delete-sweep",
         entity_category=EntityCategory.CONFIG,
         press_fn=None,  # Handled in entity using options
+    ),
+    AndroidManagementButtonDescription(
+        key="wipe",
+        name="Wipe",
+        icon="mdi:cellphone-erase",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_wipe_command,
+    ),
+    AndroidManagementButtonDescription(
+        key="start_lost_mode",
+        name="Start Lost Mode",
+        icon="mdi:map-marker-alert",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_start_lost_mode,
+    ),
+    AndroidManagementButtonDescription(
+        key="stop_lost_mode",
+        name="Stop Lost Mode",
+        icon="mdi:map-marker-check",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_stop_lost_mode,
+    ),
+    AndroidManagementButtonDescription(
+        key="request_device_info",
+        name="Request Device Info",
+        icon="mdi:sim",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_request_device_info,
     ),
 )
 

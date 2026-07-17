@@ -5,6 +5,25 @@ All notable changes to the Android Management API integration for Home Assistant
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Policy Options** for 2025–2026 Android Management API fields: application roles, `CUSTOM` install type + signing key cert, autofill, enterprise display name visibility, app functions, private space, wipe data flags, private DNS, Bluetooth sharing, user-initiated eSIM add, application/default-app reporting toggles, and optional JSON for APN / preferential network / Wi-Fi roaming / default application settings.
+- **Services** `modify_policy_applications` and `remove_policy_applications` (partial application list updates without a full policy patch).
+- **Buttons**: Wipe (`WIPE` command), Start/Stop Lost Mode, Request Device Info (EID).
+- **Sensors**: EID, Telephony Info, Application Report Count, Signing Cert SHA-256, Default Application Info.
+- `set_kiosk_policy` optional `application_roles` and `signing_key_cert_sha256`.
+
+### Changed
+
+- Dependencies: `google-api-python-client==2.198.0`, `google-auth==2.56.0`.
+- `request_device_info` now sends `deviceInfo` as the API enum string (not a list).
+
+### Fixed
+
+- Request device info command parameter shape aligned with the Android Management API.
+
 ## [0.1.6] - 2026-02-27
 
 ### Added

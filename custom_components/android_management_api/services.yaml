@@ -207,6 +207,20 @@ set_kiosk_policy:
       default: true
       selector:
         boolean:
+    application_roles:
+      name: Application Roles
+      description: >-
+        Optional comma-separated roles for the primary app (COMPANION_APP, KIOSK,
+        MOBILE_THREAT_DEFENSE_ENDPOINT_DETECTION_RESPONSE, SYSTEM_HEALTH_MONITORING).
+      required: false
+      selector:
+        text:
+    signing_key_cert_sha256:
+      name: Signing Key Cert SHA-256
+      description: Base64 SHA-256 fingerprint required for CUSTOM install type / non–Play Store role apps.
+      required: false
+      selector:
+        text:
 
 create_enrollment_token:
   name: Create Enrollment Token
@@ -585,3 +599,47 @@ refresh:
     Fetch the latest device list from the Android Management API now. Use this if
     the device list is not updating automatically (e.g. after enrolling a new device).
   fields: {}
+
+modify_policy_applications:
+  name: Modify Policy Applications
+  description: >-
+    Create or update a subset of applications on a policy without replacing the
+    entire applications list. Fires android_management_api_policy_applications_modified.
+  fields:
+    policy_id:
+      name: Policy ID
+      description: Policy identifier (e.g. policy1).
+      required: true
+      selector:
+        text:
+    applications:
+      name: Applications (JSON)
+      description: >-
+        JSON array of ApplicationPolicy objects (packageName required; installType,
+        roles, signingKeyCerts, etc. as needed).
+      required: true
+      example: '[{"packageName": "com.example.app", "installType": "FORCE_INSTALLED"}]'
+      selector:
+        text:
+          multiline: true
+
+remove_policy_applications:
+  name: Remove Policy Applications
+  description: >-
+    Remove applications from a policy by package name without fetching the full
+    applications list. Fires android_management_api_policy_applications_removed.
+  fields:
+    policy_id:
+      name: Policy ID
+      description: Policy identifier (e.g. policy1).
+      required: true
+      selector:
+        text:
+    package_names:
+      name: Package Names
+      description: Package names to remove (list, or comma/newline-separated string).
+      required: true
+      example: com.example.app
+      selector:
+        text:
+          multiline: true

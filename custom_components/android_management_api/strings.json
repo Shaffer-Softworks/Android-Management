@@ -143,10 +143,15 @@
           "auto_update_mode": "Auto-update mode",
           "lock_task_allowed": "Lock task allowed",
           "default_permission_policy": "Default permission policy",
+          "application_roles": "Application roles",
+          "signing_key_cert_sha256": "Signing key cert SHA-256 (base64)",
           "additional_packages": "Additional apps"
         },
         "data_description": {
           "package_name": "Android package name of the primary kiosk app (e.g. com.example.app)",
+          "install_type": "Use CUSTOM for sideloaded apps (requires signing key cert). Roles replace deprecated extensionConfig.",
+          "application_roles": "Optional roles (COMPANION_APP, KIOSK, MTD/EDR, system health monitoring).",
+          "signing_key_cert_sha256": "Required for CUSTOM install type or non–Play Store role apps.",
           "additional_packages": "One package name per line. These apps are force-installed alongside the primary kiosk app."
         }
       },
@@ -185,7 +190,19 @@
           "location_mode": "Location mode",
           "untrusted_apps_policy": "Untrusted apps policy",
           "google_play_protect": "Google Play Protect",
-          "ensure_verify_apps_enabled": "Enforce app verification"
+          "ensure_verify_apps_enabled": "Enforce app verification",
+          "autofill_policy": "Autofill policy",
+          "enterprise_display_name_visibility": "Enterprise display name visibility",
+          "app_functions": "App functions",
+          "private_space_policy": "Private space policy",
+          "wipe_data_flags": "Wipe data flags"
+        },
+        "data_description": {
+          "autofill_policy": "Control the system autofill service (Android 8+).",
+          "enterprise_display_name_visibility": "Show or hide the enterprise name on the device (e.g. lock screen).",
+          "app_functions": "Allow or disallow apps exposing app functions (Android 16+).",
+          "private_space_policy": "Allow or disallow Private Space (Android 15+, company-owned work profile).",
+          "wipe_data_flags": "Extra wipe behavior (external storage, eSIMs, FRP) when a policy wipe is triggered."
         }
       },
       "network": {
@@ -200,7 +217,24 @@
           "data_roaming_disabled": "Data roaming disabled",
           "mobile_networks_config_disabled": "Mobile networks config disabled",
           "cell_broadcasts_config_disabled": "Cell broadcasts config disabled",
-          "network_reset_disabled": "Network reset disabled"
+          "network_reset_disabled": "Network reset disabled",
+          "private_dns_mode": "Private DNS mode",
+          "private_dns_host": "Private DNS host",
+          "bluetooth_sharing": "Bluetooth sharing",
+          "user_initiated_add_esim": "User-initiated eSIM add",
+          "apn_policy_json": "APN policy (JSON)",
+          "preferential_network_service_settings_json": "Preferential network settings (JSON)",
+          "wifi_roaming_policy_json": "Wi-Fi roaming policy (JSON)",
+          "default_application_settings_json": "Default application settings (JSON)"
+        },
+        "data_description": {
+          "private_dns_mode": "Private DNS on company-owned devices (Android 10+). Use SPECIFIED_HOST with a host below.",
+          "private_dns_host": "Hostname when Private DNS mode is PRIVATE_DNS_SPECIFIED_HOST.",
+          "user_initiated_add_esim": "Whether users may add eSIM profiles (Android 15+ company-owned).",
+          "apn_policy_json": "Optional raw JSON for deviceConnectivityManagement.apnPolicy. Leave empty to omit.",
+          "preferential_network_service_settings_json": "Optional raw JSON for preferentialNetworkServiceSettings.",
+          "wifi_roaming_policy_json": "Optional raw JSON for wifiRoamingPolicy.",
+          "default_application_settings_json": "Optional raw JSON array for defaultApplicationSettings."
         }
       },
       "restrictions": {
@@ -252,13 +286,17 @@
           "software_info_enabled": "Report software info (Android version, build, kernel, etc.)",
           "network_info_enabled": "Report network info (IMEI, WiFi MAC, operator)",
           "memory_info_enabled": "Report memory info (RAM, storage)",
-          "display_info_enabled": "Report display info (display count)"
+          "display_info_enabled": "Report display info (display count)",
+          "application_reports_enabled": "Report installed applications",
+          "default_application_info_reporting_enabled": "Report default application info"
         },
         "data_description": {
           "software_info_enabled": "Enables Android Version, Build Number, Kernel Version, Security Patch Level, Device Policy Version, Primary Language, System Update Status",
-          "network_info_enabled": "Enables IMEI, WiFi MAC Address, Network Operator",
+          "network_info_enabled": "Enables IMEI, WiFi MAC Address, Network Operator, Telephony Info",
           "memory_info_enabled": "Enables Total RAM and storage sensors",
-          "display_info_enabled": "Enables Display Count sensor"
+          "display_info_enabled": "Enables Display Count sensor",
+          "application_reports_enabled": "Enables Application Report Count and Signing Cert SHA-256 sensors",
+          "default_application_info_reporting_enabled": "Enables Default Application Info sensor"
         }
       },
       "apply_policy": {
@@ -274,8 +312,24 @@
     },
     "error": {
       "apply_failed": "Failed to apply the policy. Check logs for details.",
+      "invalid_json_policy": "One of the advanced JSON policy fields is invalid. Fix the JSON and try again.",
       "enterprise_empty": "Configure at least one enterprise setting (Identity, Notifications, Contact, Terms, or Sign-in) before applying.",
       "apply_enterprise_failed": "Failed to apply enterprise settings. Check logs for details."
+    }
+  },
+  "entity": {
+    "button": {
+      "wipe": { "name": "Wipe" },
+      "start_lost_mode": { "name": "Start Lost Mode" },
+      "stop_lost_mode": { "name": "Stop Lost Mode" },
+      "request_device_info": { "name": "Request Device Info" }
+    },
+    "sensor": {
+      "eid": { "name": "EID" },
+      "telephony_info": { "name": "Telephony Info" },
+      "application_report_count": { "name": "Application Report Count" },
+      "signing_cert_sha256": { "name": "Signing Cert SHA-256" },
+      "default_application_info": { "name": "Default Application Info" }
     }
   }
 }
