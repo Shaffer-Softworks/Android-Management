@@ -7,7 +7,7 @@ Tips and best practices after the Android Management API integration is configur
 ## Policy ID
 
 - Policies are created and managed in the [Android Management API](https://developers.google.com/android/management) (or the [Android Management console](https://support.google.com/work/android/answer/6174145)).
-- In the integration’s **Options** flow, the **Apply Policy** step requires a **policy ID** (e.g. `policy1`). Create this policy in the console first, or create/update it via the `android_management_api.set_policy` or `set_kiosk_policy` service, then use that same ID when applying from the Options flow.
+- In the integration’s **Options** flow, the **Apply Policy** step requires a **policy ID** (e.g. `policy1`). Create this policy in the console first, or create/update it via `android_management_api.set_policy`, `set_kiosk_policy`, or `modify_policy_applications`, then use that same ID when applying from the Options flow.
 - The Options flow **fetches the live policy** from the enterprise when you open it, so the form reflects what’s currently applied.
 
 ---
@@ -35,15 +35,19 @@ For custom token duration or to get token data programmatically (e.g. for NFC or
 
 ## Using services
 
-- **Developer Tools → Services**: Call `android_management_api.set_policy`, `android_management_api.set_kiosk_policy`, `android_management_api.create_enrollment_token`, and device-level services (`clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`) with the parameters documented in the [README](../README.md#services).
+- **Developer Tools → Services**: Call `android_management_api.set_policy`, `set_kiosk_policy`, `modify_policy_applications`, `remove_policy_applications`, `create_enrollment_token`, `refresh`, and device-level services (`clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`) with the parameters documented in the [README](../README.md#services).
 - **Automations and scripts**: Use the same service names and parameters to manage policies, tokens, and devices from automations or scripts.
-- **Events**: After `create_enrollment_token`, listen for `android_management_api_enrollment_token_created` to get the token payload.
+- **Events**: After `create_enrollment_token`, listen for `android_management_api_enrollment_token_created`. After modify/remove policy applications, listen for `android_management_api_policy_applications_modified` / `android_management_api_policy_applications_removed`.
 
 ---
 
 ## Buttons and device state
 
-- Per-device **buttons** (Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data) send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply. **Clear app data** uses the package names configured in **Configure** → **General**.
+- Per-device **buttons** send commands through the API. The device must be **ACTIVE** (or in a state that accepts the command) for the action to apply.
+- **Factory Reset** deletes the device (with external storage wipe flags). **Wipe** issues the `WIPE` command (device acknowledges before reset / work-profile removal).
+- **Start Lost Mode** uses a default message; use the `start_lost_mode` service for phone/email/address fields.
+- **Request Device Info** requests EID; personally owned work profiles may require user approval.
+- **Clear app data** uses the package names configured in **Configure** → **General**.
 
 ---
 

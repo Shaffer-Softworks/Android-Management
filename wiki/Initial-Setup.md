@@ -62,6 +62,8 @@ You need at least one **enterprise** in Android Management. Its resource name (e
 
 Once you have the enterprise name (e.g. `enterprises/LC00t1kz5a`), you can add the integration in Home Assistant and paste or point to the service account JSON key.
 
+> **Enrollment requirement:** Effective November 1, 2025, Android Management API device enrollment requires [Android Enterprise registration and approval](https://developers.google.com/android/management/release-notes). Complete Google’s request form if you have not already.
+
 ---
 
 ## 6. Allow the service account to manage the enterprise

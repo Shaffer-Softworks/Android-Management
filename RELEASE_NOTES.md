@@ -4,6 +4,23 @@ Use the section below when creating a new [GitHub Release](https://github.com/Sh
 
 ---
 
+## Unreleased (draft)
+
+Android Management API 2025–H1 2026 surface: new policy Options fields, policy-application services, buttons/sensors, and client library bumps.
+
+### Changes
+
+- **Dependencies**: `google-api-python-client==2.198.0`, `google-auth==2.56.0`.
+- **Policy Options**: Application roles, `CUSTOM` install + signing cert, autofill, enterprise display name visibility, app functions, private space, wipe data flags, private DNS, Bluetooth sharing, user-initiated eSIM add, application/default-app reporting, optional JSON for APN / preferential network / Wi-Fi roaming / default apps.
+- **Services**: `modify_policy_applications`, `remove_policy_applications`; `set_kiosk_policy` gains optional `application_roles` and `signing_key_cert_sha256`.
+- **Buttons**: Wipe (`WIPE`), Start/Stop Lost Mode, Request Device Info (EID). Factory Reset remains `devices.delete`.
+- **Sensors**: EID, Telephony Info, Application Report Count, Signing Cert SHA-256, Default Application Info.
+- **Fix**: `request_device_info` sends `deviceInfo` as the API enum string.
+
+See the [README](https://github.com/Shaffer-Softworks/Android-Management#readme) and [Wiki](https://github.com/Shaffer-Softworks/Android-Management/wiki) for setup and configuration.
+
+---
+
 ## v0.1.5 (2026-02-27)
 
 Update focusing on General/Enterprise options, new services, Clear app data button, and removal of the device tracker.

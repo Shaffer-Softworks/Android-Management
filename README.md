@@ -23,8 +23,8 @@ Enrolling devices with Android Management (and the built-in Device Policy Contro
 
 | Platform | Description |
 |----------|-------------|
-| `sensor` | Per-device diagnostic sensors: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count, enrollment token data, device trust signal. |
-| `button` | Per-device command buttons: Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data (uses package names from integration options). |
+| `sensor` | Per-device diagnostics: state/policy, software & network info, memory, non-compliance, enrollment token data, device trust, EID, telephony, application reports / signing cert SHA-256, default application info. |
+| `button` | Per-device commands: Reboot, Lock, Reset Password, Factory Reset (delete), Wipe (`WIPE`), Unenroll, Relinquish Ownership, Clear app data, Start/Stop Lost Mode, Request Device Info (EID). |
 | `image` | Enterprise-level enrollment QR code generated on demand (uses default policy from integration options). |
 
 ### Key Features

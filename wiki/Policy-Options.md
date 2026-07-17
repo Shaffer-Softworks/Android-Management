@@ -9,7 +9,9 @@ The integration’s **Options** flow provides a menu-driven UI to configure **Ge
 1. Go to **Settings** → **Devices & Services** → **Integrations**.
 2. Find **Android Management API** and click **Configure** on its card.
 
-You’ll see a menu with several categories. Configure **General** (scan interval, default policy for QR code, Clear app data packages) and **Enterprise** (identity, notifications, contact, terms, sign-in) as needed, then use the policy categories and **Apply Policy** to send policy settings to the enterprise.
+You’ll see a menu with several categories. Configure **General** (scan interval, default policy for QR code, Clear app data packages) and **Enterprise** (identity, notifications, terms, sign-in) as needed, then use the policy categories and **Apply Policy** to send policy settings to the enterprise.
+
+> **Note:** Enterprise **contact info** cannot be updated via the Android Management API (Google returns 400). Manage contact details in the Google Admin console.
 
 ---
 
@@ -18,16 +20,38 @@ You’ll see a menu with several categories. Configure **General** (scan interva
 | Category | What you can configure |
 |----------|-------------------------|
 | **General** | Scan interval (seconds) for API polling, default policy ID for the enrollment QR code, and optional package names for the Clear app data button (one per line or comma-separated). |
-| **Enterprise** | Identity (display name, primary color, logo URL + SHA-256 hash), Notifications (Pub/Sub topic, enabled types), Contact (email, DPO, EU representative), Terms & Conditions, Sign-in (URL, token tag, allow personal usage). Apply saves enterprise settings to the API. |
-| **Kiosk App** | Primary kiosk app package name, install type, auto-update mode, lock task allowed, default permission policy, and additional force-installed apps (one per line). |
+| **Enterprise** | Identity (display name, primary color, logo URL + SHA-256 hash), Notifications (Pub/Sub topic, enabled types), Terms & Conditions, Sign-in (URL, token tag, allow personal usage). Apply saves enterprise settings to the API. |
+| **Kiosk App** | Primary app package, install type (including `CUSTOM`), auto-update mode, lock task, default permission policy, **application roles**, **signing key cert SHA-256** (base64; required for `CUSTOM` / non–Play Store role apps), and additional force-installed apps (one per line). |
 | **Kiosk UI** | Power button behavior, system navigation, device settings access, status bar, and system error warnings. |
 | **Display** | Screen brightness mode and level (0–255), screen timeout mode and duration. |
-| **Security & Privacy** | Developer settings, keyguard, camera, screen capture, location mode, untrusted apps, Google Play Protect, app verification. |
-| **Network & Connectivity** | Wi-Fi, Bluetooth, Bluetooth config, VPN, tethering, data roaming, mobile networks, cell broadcasts, network reset. |
+| **Security & Privacy** | Developer settings, keyguard, camera, screen capture, location mode, untrusted apps, Google Play Protect, app verification, **autofill policy**, **enterprise display name visibility**, **app functions**, **private space policy**, and **wipe data flags**. |
+| **Network & Connectivity** | Wi-Fi, Bluetooth, VPN, tethering, roaming, mobile networks, cell broadcasts, network reset; **private DNS** (mode + host), **Bluetooth sharing**, **user-initiated eSIM add**; optional JSON for **APN policy**, **preferential network settings**, **Wi-Fi roaming policy**, and **default application settings**. |
 | **Device Restrictions** | Factory reset, install/uninstall apps, physical media, USB file transfer, volume, microphone, outgoing calls, SMS, add user, modify accounts, user icon, wallpaper, share location, credentials config. |
 | **System** | App auto-update policy, system update type, Play Store mode, status bar, auto time, skip first-use hints, max time to lock, stay on while plugged (AC/USB/Wireless), long/short support messages. |
-| **Device Reporting** | Control which diagnostic data devices report (via `statusReportingSettings`): software info (Android version, build, kernel, security patch), network info (IMEI, WiFi MAC, operator), memory info, display info. Enabling these populates sensors that may show "Unknown" when disabled. |
-| **Apply Policy** | Enter the **policy ID** (e.g. `policy1`) and push all configured settings to the enterprise in one step. |
+| **Device Reporting** | `statusReportingSettings`: software info, network info, memory info, display info, **application reports**, and **default application info** reporting. Enabling these populates sensors that may show "Unknown" when disabled. |
+| **Apply Policy** | Enter the **policy ID** (e.g. `policy1`) and push all configured settings to the enterprise in one step. Invalid advanced JSON fields fail with a clear error. |
+
+### Application roles
+
+Optional roles on the primary app (replacing deprecated `extensionConfig`):
+
+- `COMPANION_APP`
+- `KIOSK`
+- `MOBILE_THREAT_DEFENSE_ENDPOINT_DETECTION_RESPONSE`
+- `SYSTEM_HEALTH_MONITORING`
+
+### Advanced JSON fields
+
+Leave empty to omit. Paste valid JSON matching the Android Management API schema:
+
+| Option | Policy path |
+|--------|-------------|
+| APN policy | `deviceConnectivityManagement.apnPolicy` |
+| Preferential network settings | `deviceConnectivityManagement.preferentialNetworkServiceSettings` |
+| Wi-Fi roaming policy | `deviceConnectivityManagement.wifiRoamingPolicy` |
+| Default application settings | `defaultApplicationSettings` |
+
+For full Policy documents beyond the Options UI, use `android_management_api.set_policy` with a raw JSON body.
 
 ---
 
@@ -51,8 +75,10 @@ You’ll see a menu with several categories. Configure **General** (scan interva
 - **Options flow** – Best for interactive, form-based editing; General, Enterprise, and all policy categories are available and the UI is pre-filled from the live policy and enterprise.
 - **Services** – Use from automations, scripts, or Developer Tools:
   - `android_management_api.set_policy` – Raw JSON policy body.
-  - `android_management_api.set_kiosk_policy` – Structured kiosk fields (primary app, additional apps, display, security, etc.).
+  - `android_management_api.set_kiosk_policy` – Structured kiosk fields (including optional `application_roles` and `signing_key_cert_sha256`).
+  - `android_management_api.modify_policy_applications` – Create/update a subset of applications without replacing the full list.
+  - `android_management_api.remove_policy_applications` – Remove applications by package name.
   - Device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
-  - Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
+  - Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`, `refresh`.
 
 See the [README – Services](../README.md#services) for the full list of service parameters.
