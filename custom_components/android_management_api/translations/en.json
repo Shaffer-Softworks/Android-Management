@@ -1,19 +1,4 @@
 {
-  "entity": {
-    "sensor": {
-      "total_ram_mb": {"name": "Total RAM (MB)"},
-      "total_internal_storage_mb": {"name": "Total Internal Storage (MB)"},
-      "total_external_storage_mb": {"name": "Total External Storage (MB)"},
-      "non_compliance_count": {"name": "Non-Compliance Count"},
-      "non_compliance_details": {"name": "Non-Compliance Details"},
-      "display_count": {"name": "Display Count"},
-      "enrollment_token_data": {"name": "Enrollment Token Data"},
-      "device_trust_signal": {"name": "Device Trust"}
-    },
-    "button": {
-      "relinquish_ownership": {"name": "Relinquish Ownership"}
-    }
-  },
   "config": {
     "step": {
       "user": {
@@ -84,133 +69,6 @@
           "clear_app_data_package_names": "Package names used when pressing the Clear app data button on a device (e.g. com.example.app). Leave empty to use the service only."
         }
       },
-      "kiosk_app": {
-        "title": "Kiosk App Settings",
-        "description": "Configure the primary kiosk app and any additional apps to install.",
-        "data": {
-          "package_name": "Primary kiosk app",
-          "install_type": "Install type",
-          "auto_update_mode": "Auto-update mode",
-          "lock_task_allowed": "Lock task allowed",
-          "default_permission_policy": "Default permission policy",
-          "additional_packages": "Additional apps"
-        },
-        "data_description": {
-          "package_name": "Android package name of the primary kiosk app (e.g. com.example.app)",
-          "additional_packages": "One package name per line. These apps are force-installed alongside the primary kiosk app."
-        }
-      },
-      "kiosk_ui": {
-        "title": "Kiosk UI Customization",
-        "description": "Control which UI elements are available in kiosk mode.",
-        "data": {
-          "power_button_actions": "Power button",
-          "system_navigation": "System navigation",
-          "device_settings": "Device settings access",
-          "kiosk_status_bar": "Status bar",
-          "system_error_warnings": "System error warnings"
-        }
-      },
-      "display": {
-        "title": "Display Settings",
-        "description": "Configure screen brightness and timeout behavior.",
-        "data": {
-          "screen_brightness_mode": "Brightness mode",
-          "screen_brightness": "Brightness level (0-255)",
-          "screen_timeout_mode": "Timeout mode",
-          "screen_timeout": "Timeout duration"
-        },
-        "data_description": {
-          "screen_timeout": "Duration string, e.g. 220s, 60s, 0s (never)"
-        }
-      },
-      "security": {
-        "title": "Security & Privacy",
-        "description": "Configure security overrides, location, and app verification settings.",
-        "data": {
-          "developer_settings": "Developer settings",
-          "keyguard_disabled": "Keyguard (lock screen) disabled",
-          "camera_disabled": "Camera disabled",
-          "screen_capture_disabled": "Screen capture disabled",
-          "location_mode": "Location mode",
-          "untrusted_apps_policy": "Untrusted apps policy",
-          "google_play_protect": "Google Play Protect",
-          "ensure_verify_apps_enabled": "Enforce app verification"
-        }
-      },
-      "network": {
-        "title": "Network & Connectivity",
-        "description": "Enable or disable network-related configuration options.",
-        "data": {
-          "wifi_config_disabled": "Wi-Fi config disabled",
-          "bluetooth_disabled": "Bluetooth disabled",
-          "bluetooth_config_disabled": "Bluetooth config disabled",
-          "vpn_config_disabled": "VPN config disabled",
-          "tethering_config_disabled": "Tethering config disabled",
-          "data_roaming_disabled": "Data roaming disabled",
-          "mobile_networks_config_disabled": "Mobile networks config disabled",
-          "cell_broadcasts_config_disabled": "Cell broadcasts config disabled",
-          "network_reset_disabled": "Network reset disabled"
-        }
-      },
-      "restrictions": {
-        "title": "Device Restrictions",
-        "description": "Control which device features and actions are allowed.",
-        "data": {
-          "factory_reset_disabled": "Factory reset disabled",
-          "install_apps_disabled": "Install apps disabled",
-          "uninstall_apps_disabled": "Uninstall apps disabled",
-          "mount_physical_media_disabled": "Mount physical media disabled",
-          "usb_file_transfer_disabled": "USB file transfer disabled",
-          "adjust_volume_disabled": "Adjust volume disabled",
-          "unmute_microphone_disabled": "Unmute microphone disabled",
-          "outgoing_calls_disabled": "Outgoing calls disabled",
-          "sms_disabled": "SMS disabled",
-          "add_user_disabled": "Add user disabled",
-          "modify_accounts_disabled": "Modify accounts disabled",
-          "set_user_icon_disabled": "Set user icon disabled",
-          "set_wallpaper_disabled": "Set wallpaper disabled",
-          "share_location_disabled": "Share location disabled",
-          "credentials_config_disabled": "Credentials config disabled"
-        }
-      },
-      "system": {
-        "title": "System Settings",
-        "description": "Configure global system behavior, updates, and support messages.",
-        "data": {
-          "app_auto_update_policy": "App auto-update policy",
-          "system_update_type": "System update type",
-          "play_store_mode": "Play Store mode",
-          "status_bar_disabled": "Status bar disabled",
-          "auto_time_required": "Auto time required",
-          "skip_first_use_hints_enabled": "Skip first-use hints",
-          "maximum_time_to_lock": "Maximum time to lock (ms)",
-          "stay_on_plugged_modes": "Stay on while plugged",
-          "long_support_message": "Long support message",
-          "short_support_message": "Short support message"
-        },
-        "data_description": {
-          "maximum_time_to_lock": "Maximum time in milliseconds before the screen locks. 0 = no restriction.",
-          "long_support_message": "Shown on the device admin settings screen.",
-          "short_support_message": "Shown in various system dialogs."
-        }
-      },
-      "device_reporting": {
-        "title": "Device Reporting",
-        "description": "Control which diagnostic data the device reports. Enable these to populate Android Version, Build Number, IMEI, WiFi MAC, and other sensors that may show Unknown when disabled.",
-        "data": {
-          "software_info_enabled": "Report software info (Android version, build, kernel, etc.)",
-          "network_info_enabled": "Report network info (IMEI, WiFi MAC, operator)",
-          "memory_info_enabled": "Report memory info (RAM, storage)",
-          "display_info_enabled": "Report display info (display count)"
-        },
-        "data_description": {
-          "software_info_enabled": "Enables Android Version, Build Number, Kernel Version, Security Patch Level, Device Policy Version, Primary Language, System Update Status",
-          "network_info_enabled": "Enables IMEI, WiFi MAC Address, Network Operator",
-          "memory_info_enabled": "Enables Total RAM and storage sensors",
-          "display_info_enabled": "Enables Display Count sensor"
-        }
-      },
       "enterprise": {
         "title": "Enterprise Settings",
         "description": "Configure enterprise identity, notifications, contact info, terms and conditions, and sign-in details.",
@@ -276,6 +134,171 @@
         "title": "Apply to enterprise",
         "description": "Push the configured enterprise settings (identity, notifications, contact, terms, sign-in) to the API. Click Submit to apply."
       },
+      "kiosk_app": {
+        "title": "Kiosk App Settings",
+        "description": "Configure the primary kiosk app and any additional apps to install.",
+        "data": {
+          "package_name": "Primary kiosk app",
+          "install_type": "Install type",
+          "auto_update_mode": "Auto-update mode",
+          "lock_task_allowed": "Lock task allowed",
+          "default_permission_policy": "Default permission policy",
+          "application_roles": "Application roles",
+          "signing_key_cert_sha256": "Signing key cert SHA-256 (base64)",
+          "additional_packages": "Additional apps"
+        },
+        "data_description": {
+          "package_name": "Android package name of the primary kiosk app (e.g. com.example.app)",
+          "install_type": "Use CUSTOM for sideloaded apps (requires signing key cert). Roles replace deprecated extensionConfig.",
+          "application_roles": "Optional roles (COMPANION_APP, KIOSK, MTD/EDR, system health monitoring).",
+          "signing_key_cert_sha256": "Required for CUSTOM install type or non–Play Store role apps.",
+          "additional_packages": "One package name per line. These apps are force-installed alongside the primary kiosk app."
+        }
+      },
+      "kiosk_ui": {
+        "title": "Kiosk UI Customization",
+        "description": "Control which UI elements are available in kiosk mode.",
+        "data": {
+          "power_button_actions": "Power button",
+          "system_navigation": "System navigation",
+          "device_settings": "Device settings access",
+          "kiosk_status_bar": "Status bar",
+          "system_error_warnings": "System error warnings"
+        }
+      },
+      "display": {
+        "title": "Display Settings",
+        "description": "Configure screen brightness and timeout behavior.",
+        "data": {
+          "screen_brightness_mode": "Brightness mode",
+          "screen_brightness": "Brightness level (0-255)",
+          "screen_timeout_mode": "Timeout mode",
+          "screen_timeout": "Timeout duration"
+        },
+        "data_description": {
+          "screen_timeout": "Duration string, e.g. 220s, 60s, 0s (never)"
+        }
+      },
+      "security": {
+        "title": "Security & Privacy",
+        "description": "Configure security overrides, location, and app verification settings.",
+        "data": {
+          "developer_settings": "Developer settings",
+          "keyguard_disabled": "Keyguard (lock screen) disabled",
+          "camera_disabled": "Camera disabled",
+          "screen_capture_disabled": "Screen capture disabled",
+          "location_mode": "Location mode",
+          "untrusted_apps_policy": "Untrusted apps policy",
+          "google_play_protect": "Google Play Protect",
+          "ensure_verify_apps_enabled": "Enforce app verification",
+          "autofill_policy": "Autofill policy",
+          "enterprise_display_name_visibility": "Enterprise display name visibility",
+          "app_functions": "App functions",
+          "private_space_policy": "Private space policy",
+          "wipe_data_flags": "Wipe data flags"
+        },
+        "data_description": {
+          "autofill_policy": "Control the system autofill service (Android 8+).",
+          "enterprise_display_name_visibility": "Show or hide the enterprise name on the device (e.g. lock screen).",
+          "app_functions": "Allow or disallow apps exposing app functions (Android 16+).",
+          "private_space_policy": "Allow or disallow Private Space (Android 15+, company-owned work profile).",
+          "wipe_data_flags": "Extra wipe behavior (external storage, eSIMs, FRP) when a policy wipe is triggered."
+        }
+      },
+      "network": {
+        "title": "Network & Connectivity",
+        "description": "Enable or disable network-related configuration options.",
+        "data": {
+          "wifi_config_disabled": "Wi-Fi config disabled",
+          "bluetooth_disabled": "Bluetooth disabled",
+          "bluetooth_config_disabled": "Bluetooth config disabled",
+          "vpn_config_disabled": "VPN config disabled",
+          "tethering_config_disabled": "Tethering config disabled",
+          "data_roaming_disabled": "Data roaming disabled",
+          "mobile_networks_config_disabled": "Mobile networks config disabled",
+          "cell_broadcasts_config_disabled": "Cell broadcasts config disabled",
+          "network_reset_disabled": "Network reset disabled",
+          "private_dns_mode": "Private DNS mode",
+          "private_dns_host": "Private DNS host",
+          "bluetooth_sharing": "Bluetooth sharing",
+          "user_initiated_add_esim": "User-initiated eSIM add",
+          "apn_policy_json": "APN policy (JSON)",
+          "preferential_network_service_settings_json": "Preferential network settings (JSON)",
+          "wifi_roaming_policy_json": "Wi-Fi roaming policy (JSON)",
+          "default_application_settings_json": "Default application settings (JSON)"
+        },
+        "data_description": {
+          "private_dns_mode": "Private DNS on company-owned devices (Android 10+). Use SPECIFIED_HOST with a host below.",
+          "private_dns_host": "Hostname when Private DNS mode is PRIVATE_DNS_SPECIFIED_HOST.",
+          "user_initiated_add_esim": "Whether users may add eSIM profiles (Android 15+ company-owned).",
+          "apn_policy_json": "Optional raw JSON for deviceConnectivityManagement.apnPolicy. Leave empty to omit.",
+          "preferential_network_service_settings_json": "Optional raw JSON for preferentialNetworkServiceSettings.",
+          "wifi_roaming_policy_json": "Optional raw JSON for wifiRoamingPolicy.",
+          "default_application_settings_json": "Optional raw JSON array for defaultApplicationSettings."
+        }
+      },
+      "restrictions": {
+        "title": "Device Restrictions",
+        "description": "Control which device features and actions are allowed.",
+        "data": {
+          "factory_reset_disabled": "Factory reset disabled",
+          "install_apps_disabled": "Install apps disabled",
+          "uninstall_apps_disabled": "Uninstall apps disabled",
+          "mount_physical_media_disabled": "Mount physical media disabled",
+          "usb_file_transfer_disabled": "USB file transfer disabled",
+          "adjust_volume_disabled": "Adjust volume disabled",
+          "unmute_microphone_disabled": "Unmute microphone disabled",
+          "outgoing_calls_disabled": "Outgoing calls disabled",
+          "sms_disabled": "SMS disabled",
+          "add_user_disabled": "Add user disabled",
+          "modify_accounts_disabled": "Modify accounts disabled",
+          "set_user_icon_disabled": "Set user icon disabled",
+          "set_wallpaper_disabled": "Set wallpaper disabled",
+          "share_location_disabled": "Share location disabled",
+          "credentials_config_disabled": "Credentials config disabled"
+        }
+      },
+      "system": {
+        "title": "System Settings",
+        "description": "Configure global system behavior, updates, and support messages.",
+        "data": {
+          "app_auto_update_policy": "App auto-update policy",
+          "system_update_type": "System update type",
+          "play_store_mode": "Play Store mode",
+          "status_bar_disabled": "Status bar disabled",
+          "auto_time_required": "Auto time required",
+          "skip_first_use_hints_enabled": "Skip first-use hints",
+          "maximum_time_to_lock": "Maximum time to lock (ms)",
+          "stay_on_plugged_modes": "Stay on while plugged",
+          "long_support_message": "Long support message",
+          "short_support_message": "Short support message"
+        },
+        "data_description": {
+          "maximum_time_to_lock": "Maximum time in milliseconds before the screen locks. 0 = no restriction.",
+          "long_support_message": "Shown on the device admin settings screen.",
+          "short_support_message": "Shown in various system dialogs."
+        }
+      },
+      "device_reporting": {
+        "title": "Device Reporting",
+        "description": "Control which diagnostic data the device reports. Enable these to populate Android Version, Build Number, IMEI, WiFi MAC, and other sensors that may show Unknown when disabled.",
+        "data": {
+          "software_info_enabled": "Report software info (Android version, build, kernel, etc.)",
+          "network_info_enabled": "Report network info (IMEI, WiFi MAC, operator)",
+          "memory_info_enabled": "Report memory info (RAM, storage)",
+          "display_info_enabled": "Report display info (display count)",
+          "application_reports_enabled": "Report installed applications",
+          "default_application_info_reporting_enabled": "Report default application info"
+        },
+        "data_description": {
+          "software_info_enabled": "Enables Android Version, Build Number, Kernel Version, Security Patch Level, Device Policy Version, Primary Language, System Update Status",
+          "network_info_enabled": "Enables IMEI, WiFi MAC Address, Network Operator, Telephony Info",
+          "memory_info_enabled": "Enables Total RAM and storage sensors",
+          "display_info_enabled": "Enables Display Count sensor",
+          "application_reports_enabled": "Enables Application Report Count and Signing Cert SHA-256 sensors",
+          "default_application_info_reporting_enabled": "Enables Default Application Info sensor"
+        }
+      },
       "apply_policy": {
         "title": "Apply Policy",
         "description": "Push the configured settings to the enterprise as a policy. This will overwrite the existing policy with the given ID.",
@@ -289,8 +312,24 @@
     },
     "error": {
       "apply_failed": "Failed to apply the policy. Check logs for details.",
+      "invalid_json_policy": "One of the advanced JSON policy fields is invalid. Fix the JSON and try again.",
       "enterprise_empty": "Configure at least one enterprise setting (Identity, Notifications, Contact, Terms, or Sign-in) before applying.",
       "apply_enterprise_failed": "Failed to apply enterprise settings. Check logs for details."
+    }
+  },
+  "entity": {
+    "button": {
+      "wipe": { "name": "Wipe" },
+      "start_lost_mode": { "name": "Start Lost Mode" },
+      "stop_lost_mode": { "name": "Stop Lost Mode" },
+      "request_device_info": { "name": "Request Device Info" }
+    },
+    "sensor": {
+      "eid": { "name": "EID" },
+      "telephony_info": { "name": "Telephony Info" },
+      "application_report_count": { "name": "Application Report Count" },
+      "signing_cert_sha256": { "name": "Signing Cert SHA-256" },
+      "default_application_info": { "name": "Default Application Info" }
     }
   }
 }

@@ -44,6 +44,72 @@ def _nested_get(data: dict[str, Any], *keys: str) -> Any:
     return data
 
 
+def _device_eid(data: dict[str, Any]) -> str | None:
+    """Extract EID from hardwareInfo.euiccChipInfo (object or list)."""
+    info = _nested_get(data, "hardwareInfo", "euiccChipInfo")
+    if isinstance(info, list):
+        for item in info:
+            if isinstance(item, dict) and item.get("eid"):
+                return item["eid"]
+        return None
+    if isinstance(info, dict):
+        return info.get("eid")
+    return None
+
+
+def _telephony_summary(data: dict[str, Any]) -> str | None:
+    """Condense networkInfo.telephonyInfos for a sensor state."""
+    infos = _nested_get(data, "networkInfo", "telephonyInfos")
+    if not isinstance(infos, list) or not infos:
+        return None
+    parts: list[str] = []
+    for info in infos:
+        if not isinstance(info, dict):
+            continue
+        bits = [
+            str(info[k])
+            for k in ("carrierName", "phoneNumber", "iccId", "activationState")
+            if info.get(k)
+        ]
+        if bits:
+            parts.append("/".join(bits))
+    return "; ".join(parts) if parts else str(infos)
+
+
+def _signing_cert_sha256(data: dict[str, Any]) -> str | None:
+    """Prefer SHA-256 signing cert from the first application report."""
+    reports = data.get("applicationReports")
+    if not isinstance(reports, list) or not reports:
+        return None
+    first = reports[0]
+    if not isinstance(first, dict):
+        return None
+    for key in (
+        "signingKeyCertFingerprintSha256",
+        "signerInfo",
+    ):
+        val = first.get(key)
+        if isinstance(val, str) and val:
+            return val
+        if isinstance(val, list) and val:
+            item = val[0]
+            if isinstance(item, dict):
+                sha = item.get("signingKeyCertFingerprintSha256") or item.get(
+                    "sha256"
+                )
+                if sha:
+                    return str(sha)
+            elif isinstance(item, str):
+                return item
+    # Legacy SHA-1 field as last resort
+    legacy = first.get("signingKeyCertFingerprints") or first.get(
+        "signingKeyCertificateFingerprints"
+    )
+    if isinstance(legacy, list) and legacy:
+        return str(legacy[0])
+    return None
+
+
 SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
     # --- Top-level fields ---
     AndroidManagementSensorDescription(
@@ -317,6 +383,50 @@ SENSOR_DESCRIPTIONS: tuple[AndroidManagementSensorDescription, ...] = (
         value_fn=lambda d: (
             str(d.get("deviceTrustSignal"))
             if d.get("deviceTrustSignal") is not None
+            else None
+        ),
+    ),
+    # --- eSIM / telephony / application reporting ---
+    AndroidManagementSensorDescription(
+        key="eid",
+        translation_key="eid",
+        name="EID",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_device_eid,
+    ),
+    AndroidManagementSensorDescription(
+        key="telephony_info",
+        translation_key="telephony_info",
+        name="Telephony Info",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_telephony_summary,
+    ),
+    AndroidManagementSensorDescription(
+        key="application_report_count",
+        translation_key="application_report_count",
+        name="Application Report Count",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(len(d.get("applicationReports", [])))
+            if d.get("applicationReports") is not None
+            else None
+        ),
+    ),
+    AndroidManagementSensorDescription(
+        key="signing_cert_sha256",
+        translation_key="signing_cert_sha256",
+        name="Signing Cert SHA-256",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_signing_cert_sha256,
+    ),
+    AndroidManagementSensorDescription(
+        key="default_application_info",
+        translation_key="default_application_info",
+        name="Default Application Info",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: (
+            str(d.get("defaultApplicationInfo"))
+            if d.get("defaultApplicationInfo") is not None
             else None
         ),
     ),

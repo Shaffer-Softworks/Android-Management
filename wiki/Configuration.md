@@ -32,7 +32,7 @@ How to add and configure the Android Management API integration in Home Assistan
 ## After setup
 
 - **Configure (Options)** – On the integration card, click **Configure** to open the policy management UI. See [Policy Options](Policy-Options).
-- **Entities** – Per-device sensors (state, policy, software/network info, memory, non-compliance, enrollment token data, device trust), buttons (Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data), and enterprise-level enrollment QR image entity. They appear under the integration device(s) and under **Settings → Devices & Services → Entities**.
+- **Entities** – Per-device sensors (state, policy, software/network info, memory, non-compliance, enrollment token data, device trust, EID, telephony, application reports / signing cert SHA-256, default application info), buttons (Reboot, Lock, Reset Password, Factory Reset, Wipe, Unenroll, Relinquish Ownership, Clear app data, Start/Stop Lost Mode, Request Device Info), and enterprise-level enrollment QR image entity. They appear under the integration device(s) and under **Settings → Devices & Services → Entities**.
 
 ---
 

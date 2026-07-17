@@ -303,6 +303,54 @@ class AndroidManagementAPIClient:
             )
         return policies
 
+    async def async_modify_policy_applications(
+        self,
+        hass,
+        policy_id: str,
+        applications: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Create or update a subset of applications on a policy."""
+        return await hass.async_add_executor_job(
+            self._modify_policy_applications, policy_id, applications
+        )
+
+    def _modify_policy_applications(
+        self, policy_id: str, applications: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Modify policy applications (synchronous)."""
+        name = f"{self._enterprise_name}/policies/{policy_id}"
+        return self._execute_request(
+            self._service.enterprises()
+            .policies()
+            .modifyPolicyApplications(
+                name=name, body={"applications": applications}
+            )
+        )
+
+    async def async_remove_policy_applications(
+        self,
+        hass,
+        policy_id: str,
+        package_names: list[str],
+    ) -> dict[str, Any]:
+        """Remove applications from a policy by package name."""
+        return await hass.async_add_executor_job(
+            self._remove_policy_applications, policy_id, package_names
+        )
+
+    def _remove_policy_applications(
+        self, policy_id: str, package_names: list[str]
+    ) -> dict[str, Any]:
+        """Remove policy applications (synchronous)."""
+        name = f"{self._enterprise_name}/policies/{policy_id}"
+        return self._execute_request(
+            self._service.enterprises()
+            .policies()
+            .removePolicyApplications(
+                name=name, body={"packageNames": package_names}
+            )
+        )
+
     async def async_list_enrollment_tokens(self, hass) -> list[dict[str, Any]]:
         """List active enrollment tokens for the enterprise."""
         return await hass.async_add_executor_job(self._list_enrollment_tokens)

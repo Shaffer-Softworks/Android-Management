@@ -33,18 +33,18 @@
 
 ## Options Flow (Policy Configuration)
 
-After setup, click **Configure** on the integration card to manage kiosk policies via a menu-driven UI:
+After setup, click **Configure** on the integration card to manage policies via a menu-driven UI:
 
-- **Kiosk App** — Primary kiosk app + additional force-installed apps (one per line).
+- **Kiosk App** — Primary app (including `CUSTOM` install type), application roles, signing key cert SHA-256, additional force-installed apps.
 - **Kiosk UI** — Power button, navigation, device settings, status bar, error warnings.
 - **Display** — Brightness mode/level, screen timeout mode/duration.
-- **Security & Privacy** — Developer settings, keyguard, camera, screen capture, location, app verification.
-- **Network & Connectivity** — Wi-Fi, Bluetooth, VPN, tethering, data roaming, mobile networks, and more.
+- **Security & Privacy** — Developer settings, keyguard, camera, screen capture, location, app verification, autofill, enterprise display name visibility, app functions, private space, wipe data flags.
+- **Network & Connectivity** — Wi-Fi, Bluetooth, VPN, tethering, private DNS, Bluetooth sharing, user-initiated eSIM add, plus optional JSON for APN / preferential network / Wi-Fi roaming / default apps.
 - **Device Restrictions** — Factory reset, app install/uninstall, USB, volume, calls, SMS, accounts, and more.
 - **System** — Auto-update policy, system updates, Play Store mode, support messages, and more.
-- **General** — Scan interval, default policy for enrollment QR code, package names for Clear app data button
-- **Enterprise** — Identity (display name, primary color, logo), Notifications, Contact, Terms & Conditions, Sign-in
-- **Device Reporting** — Control which diagnostic data devices report (software info, network info, memory info, display info). Enables sensors that may show "Unknown" when disabled.
+- **General** — Scan interval, default policy for enrollment QR code, package names for Clear app data button.
+- **Enterprise** — Identity (display name, primary color, logo), Notifications, Terms & Conditions, Sign-in (contact info is managed in Google Admin console).
+- **Device Reporting** — Software, network, memory, display, application reports, and default application info reporting.
 - **Apply Policy** — Push all settings to the enterprise with a single click.
 
 The Options flow fetches the **live policy and enterprise** so fields always show what's currently active.
@@ -52,8 +52,8 @@ The Options flow fetches the **live policy and enterprise** so fields always sho
 ## Entities Created
 
 **Per managed device:**
-- **Sensors** — State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info (Android version, build, kernel), network info (IMEI, WiFi MAC), memory info, non-compliance details, display count, enrollment token data, device trust
-- **Buttons** — Reboot, Lock, Reset Password, Factory Reset, Unenroll, Relinquish Ownership, Clear app data
+- **Sensors** — State, management/policy, software & network info, memory, non-compliance, enrollment token data, device trust, EID, telephony, application report count, signing cert SHA-256, default application info
+- **Buttons** — Reboot, Lock, Reset Password, Factory Reset (delete), Wipe (`WIPE`), Unenroll, Relinquish Ownership, Clear app data, Start/Stop Lost Mode, Request Device Info
 
 **Per enterprise:**
 - **Image** — Enrollment QR Code (generates a fresh 24-hour enrollment token on demand; uses default policy from options)
@@ -61,10 +61,11 @@ The Options flow fetches the **live policy and enterprise** so fields always sho
 ## Services
 
 - `android_management_api.set_policy` — Create or update a policy by ID with an optional raw JSON body.
-- `android_management_api.set_kiosk_policy` — Create or update a kiosk policy with structured fields (primary app + additional apps, display, security, kiosk UI, and more).
+- `android_management_api.set_kiosk_policy` — Structured kiosk fields (including optional `application_roles` and `signing_key_cert_sha256`).
+- `android_management_api.modify_policy_applications` / `remove_policy_applications` — Partial application list updates.
 - `android_management_api.create_enrollment_token` — Create an enrollment token (policy_id, one_time_only, additional_data, allow_personal_usage; fires an event with the token data).
 - Device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`.
-- Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`.
+- Enterprise/API: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`, `refresh`.
 
 <!-- {% endif %} -->
 
@@ -74,11 +75,11 @@ The Options flow fetches the **live policy and enterprise** so fields always sho
 **Features:**
 - Full integration with Google's [Android Management API](https://developers.google.com/android/management)
 - Two-step config flow with service account authentication (paste JSON or provide file path)
-- **Options flow** with **General**, **Enterprise**, and policy categories: Kiosk App, Kiosk UI, Display, Security & Privacy, Network & Connectivity, Device Restrictions, System, Device Reporting, Apply Policy — fetches live policy and enterprise to pre-populate fields
+- **Options flow** with **General**, **Enterprise**, and policy categories (including 2025–2026 fields: application roles, autofill, private DNS, eSIM controls, reporting toggles, advanced JSON) — fetches live policy and enterprise to pre-populate fields
 - **Multi-app kiosk support** — configure a primary kiosk app plus additional force-installed apps
 - **DataUpdateCoordinator** with configurable scan interval (default 60 s)
-- Per-device **sensors**: State, Management Mode, Ownership, Policy Name, API Level, Enrollment Time, software info, network info, memory info, non-compliance details, display count, enrollment token data, device trust
-- Per-device **buttons**: Reboot, Lock, Reset Password, Factory Reset (wipe), Unenroll, Relinquish Ownership, Clear app data
+- Per-device **sensors**: state/policy, software & network, memory, non-compliance, enrollment token data, device trust, EID, telephony, application reports / signing cert SHA-256, default application info
+- Per-device **buttons**: Reboot, Lock, Reset Password, Factory Reset (delete), Wipe (`WIPE`), Unenroll, Relinquish Ownership, Clear app data, Start/Stop Lost Mode, Request Device Info
 - Enterprise-level **enrollment QR code** image entity (24-hour token on demand; default policy from options)
-- **Services**: `set_policy`, `set_kiosk_policy`, `create_enrollment_token` (with policy_id, one_time_only, etc.); device-level: `clear_app_data`, `start_lost_mode`, `stop_lost_mode`, `patch_device`, `wipe`, `add_esim`, `remove_esim`, `request_device_info`, `issue_command`, `reset_password`; enterprise: `list_policies`, `list_enrollment_tokens`, `delete_enrollment_token`, `get_operation`, `get_enterprise`, `patch_enterprise`, `create_web_token`
+- **Services**: `set_policy`, `set_kiosk_policy`, `modify_policy_applications`, `remove_policy_applications`, `create_enrollment_token`; device-level and enterprise services as listed above; `refresh` to force a device-list poll
 <!-- {% endif %} -->

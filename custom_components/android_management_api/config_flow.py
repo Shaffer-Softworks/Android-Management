@@ -125,11 +125,24 @@ STEP_FILE_SCHEMA = vol.Schema(
 
 # ── Options flow schemas (raw dicts, wrapped with suggestions at runtime) ────
 
+APPLICATION_ROLE_OPTIONS = [
+    "COMPANION_APP",
+    "KIOSK",
+    "MOBILE_THREAT_DEFENSE_ENDPOINT_DETECTION_RESPONSE",
+    "SYSTEM_HEALTH_MONITORING",
+]
+
+WIPE_DATA_FLAG_OPTIONS = [
+    "WIPE_EXTERNAL_STORAGE",
+    "WIPE_ESIMS",
+    "PRESERVE_RESET_PROTECTION_DATA",
+]
+
 KIOSK_APP_SCHEMA = {
     vol.Optional("package_name", default=""): _text(),
     vol.Optional("install_type", default="KIOSK"): _select([
         "KIOSK", "FORCE_INSTALLED", "PREINSTALLED",
-        "AVAILABLE", "REQUIRED_FOR_SETUP", "BLOCKED",
+        "AVAILABLE", "REQUIRED_FOR_SETUP", "BLOCKED", "CUSTOM",
     ]),
     vol.Optional("auto_update_mode", default="AUTO_UPDATE_HIGH_PRIORITY"): _select([
         "AUTO_UPDATE_HIGH_PRIORITY", "AUTO_UPDATE_POSTPONED", "AUTO_UPDATE_DEFAULT",
@@ -138,6 +151,14 @@ KIOSK_APP_SCHEMA = {
     vol.Optional("default_permission_policy", default="GRANT"): _select([
         "GRANT", "PROMPT", "DENY",
     ]),
+    vol.Optional("application_roles", default=[]): SelectSelector(
+        SelectSelectorConfig(
+            options=[{"value": r, "label": r} for r in APPLICATION_ROLE_OPTIONS],
+            multiple=True,
+            mode=SelectSelectorMode.DROPDOWN,
+        )
+    ),
+    vol.Optional("signing_key_cert_sha256", default=""): _text(),
     vol.Optional("additional_packages", default=""): _text(multiline=True),
 }
 
@@ -192,6 +213,36 @@ SECURITY_SCHEMA = {
         "VERIFY_APPS_ENFORCED", "VERIFY_APPS_USER_CHOICE",
     ]),
     vol.Optional("ensure_verify_apps_enabled", default=True): _bool,
+    vol.Optional("autofill_policy", default="AUTOFILL_USER_CHOICE"): _select([
+        "AUTOFILL_POLICY_UNSPECIFIED",
+        "AUTOFILL_USER_CHOICE",
+        "AUTOFILL_DISABLED",
+    ]),
+    vol.Optional(
+        "enterprise_display_name_visibility",
+        default="ENTERPRISE_DISPLAY_NAME_VISIBLE",
+    ): _select([
+        "ENTERPRISE_DISPLAY_NAME_VISIBILITY_UNSPECIFIED",
+        "ENTERPRISE_DISPLAY_NAME_VISIBLE",
+        "ENTERPRISE_DISPLAY_NAME_HIDDEN",
+    ]),
+    vol.Optional("app_functions", default="APP_FUNCTIONS_ALLOWED"): _select([
+        "APP_FUNCTIONS_UNSPECIFIED",
+        "APP_FUNCTIONS_ALLOWED",
+        "APP_FUNCTIONS_DISALLOWED",
+    ]),
+    vol.Optional("private_space_policy", default="PRIVATE_SPACE_ALLOWED"): _select([
+        "PRIVATE_SPACE_POLICY_UNSPECIFIED",
+        "PRIVATE_SPACE_ALLOWED",
+        "PRIVATE_SPACE_DISALLOWED",
+    ]),
+    vol.Optional("wipe_data_flags", default=[]): SelectSelector(
+        SelectSelectorConfig(
+            options=[{"value": f, "label": f} for f in WIPE_DATA_FLAG_OPTIONS],
+            multiple=True,
+            mode=SelectSelectorMode.DROPDOWN,
+        )
+    ),
 }
 
 NETWORK_SCHEMA = {
@@ -204,6 +255,34 @@ NETWORK_SCHEMA = {
     vol.Optional("mobile_networks_config_disabled", default=False): _bool,
     vol.Optional("cell_broadcasts_config_disabled", default=False): _bool,
     vol.Optional("network_reset_disabled", default=False): _bool,
+    vol.Optional("private_dns_mode", default="PRIVATE_DNS_USER_CHOICE"): _select([
+        "PRIVATE_DNS_MODE_UNSPECIFIED",
+        "PRIVATE_DNS_USER_CHOICE",
+        "PRIVATE_DNS_AUTOMATIC",
+        "PRIVATE_DNS_SPECIFIED_HOST",
+    ]),
+    vol.Optional("private_dns_host", default=""): _text(),
+    vol.Optional("bluetooth_sharing", default="BLUETOOTH_SHARING_UNSPECIFIED"): _select([
+        "BLUETOOTH_SHARING_UNSPECIFIED",
+        "BLUETOOTH_SHARING_ALLOWED",
+        "BLUETOOTH_SHARING_DISALLOWED",
+    ]),
+    vol.Optional(
+        "user_initiated_add_esim",
+        default="USER_INITIATED_ADD_ESIM_ALLOWED",
+    ): _select([
+        "USER_INITIATED_ADD_ESIM_SETTINGS_UNSPECIFIED",
+        "USER_INITIATED_ADD_ESIM_ALLOWED",
+        "USER_INITIATED_ADD_ESIM_DISALLOWED",
+    ]),
+    vol.Optional("apn_policy_json", default=""): _text(multiline=True),
+    vol.Optional(
+        "preferential_network_service_settings_json", default=""
+    ): _text(multiline=True),
+    vol.Optional("wifi_roaming_policy_json", default=""): _text(multiline=True),
+    vol.Optional(
+        "default_application_settings_json", default=""
+    ): _text(multiline=True),
 }
 
 RESTRICTIONS_SCHEMA = {
@@ -258,7 +337,26 @@ DEVICE_REPORTING_SCHEMA = {
     vol.Optional("network_info_enabled", default=True): _bool,
     vol.Optional("memory_info_enabled", default=True): _bool,
     vol.Optional("display_info_enabled", default=True): _bool,
+    vol.Optional("application_reports_enabled", default=False): _bool,
+    vol.Optional("default_application_info_reporting_enabled", default=False): _bool,
 }
+
+STRING_ENUM_FIELD_MAP: dict[str, str] = {
+    "autofill_policy": "autofillPolicy",
+    "enterprise_display_name_visibility": "enterpriseDisplayNameVisibility",
+    "app_functions": "appFunctions",
+}
+
+
+def _parse_optional_json(raw: str | None, field_name: str) -> Any | None:
+    """Parse optional multiline JSON; empty returns None; invalid raises ValueError."""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as err:
+        raise ValueError(f"Invalid JSON in {field_name}: {err}") from err
 
 APPLY_POLICY_SCHEMA = {
     vol.Required("policy_id", default="policy1"): _text(),
@@ -305,6 +403,7 @@ STRING_FIELD_MAP: dict[str, str] = {
     "app_auto_update_policy": "appAutoUpdatePolicy",
     "location_mode": "locationMode",
     "play_store_mode": "playStoreMode",
+    **STRING_ENUM_FIELD_MAP,
 }
 
 
@@ -339,6 +438,16 @@ def parse_policy_to_options(policy: dict[str, Any]) -> dict[str, Any]:
                 opts["lock_task_allowed"] = primary["lockTaskAllowed"]
             if primary.get("defaultPermissionPolicy"):
                 opts["default_permission_policy"] = primary["defaultPermissionPolicy"]
+            roles = primary.get("roles") or []
+            if roles:
+                opts["application_roles"] = [
+                    r.get("roleType") for r in roles if r.get("roleType")
+                ]
+            certs = primary.get("signingKeyCerts") or []
+            if certs and certs[0].get("signingKeyCertFingerprintSha256"):
+                opts["signing_key_cert_sha256"] = certs[0][
+                    "signingKeyCertFingerprintSha256"
+                ]
 
         if additional:
             opts["additional_packages"] = "\n".join(additional)
@@ -421,6 +530,50 @@ def parse_policy_to_options(policy: dict[str, Any]) -> dict[str, Any]:
         opts["memory_info_enabled"] = reporting["memoryInfoEnabled"]
     if "displayInfoEnabled" in reporting:
         opts["display_info_enabled"] = reporting["displayInfoEnabled"]
+    if "applicationReportsEnabled" in reporting:
+        opts["application_reports_enabled"] = reporting["applicationReportsEnabled"]
+    if "defaultApplicationInfoReportingEnabled" in reporting:
+        opts["default_application_info_reporting_enabled"] = reporting[
+            "defaultApplicationInfoReportingEnabled"
+        ]
+
+    # ── Wipe flags ──
+    if policy.get("wipeDataFlags"):
+        opts["wipe_data_flags"] = policy["wipeDataFlags"]
+
+    # ── Personal usage / private space ──
+    personal = policy.get("personalUsagePolicies") or {}
+    if personal.get("privateSpacePolicy"):
+        opts["private_space_policy"] = personal["privateSpacePolicy"]
+
+    # ── Connectivity / radio ──
+    connectivity = policy.get("deviceConnectivityManagement") or {}
+    private_dns = connectivity.get("privateDnsSettings") or {}
+    if private_dns.get("privateDnsMode"):
+        opts["private_dns_mode"] = private_dns["privateDnsMode"]
+    if private_dns.get("privateDnsHost"):
+        opts["private_dns_host"] = private_dns["privateDnsHost"]
+    if connectivity.get("bluetoothSharing"):
+        opts["bluetooth_sharing"] = connectivity["bluetoothSharing"]
+    if connectivity.get("apnPolicy") is not None:
+        opts["apn_policy_json"] = json.dumps(connectivity["apnPolicy"], indent=2)
+    if connectivity.get("preferentialNetworkServiceSettings") is not None:
+        opts["preferential_network_service_settings_json"] = json.dumps(
+            connectivity["preferentialNetworkServiceSettings"], indent=2
+        )
+    if connectivity.get("wifiRoamingPolicy") is not None:
+        opts["wifi_roaming_policy_json"] = json.dumps(
+            connectivity["wifiRoamingPolicy"], indent=2
+        )
+
+    radio = policy.get("deviceRadioState") or {}
+    if radio.get("userInitiatedAddEsimSettings"):
+        opts["user_initiated_add_esim"] = radio["userInitiatedAddEsimSettings"]
+
+    if policy.get("defaultApplicationSettings") is not None:
+        opts["default_application_settings_json"] = json.dumps(
+            policy["defaultApplicationSettings"], indent=2
+        )
 
     return opts
 
@@ -442,6 +595,14 @@ def build_policy_from_options(opts: dict[str, Any]) -> dict[str, Any]:
             primary["lockTaskAllowed"] = opts["lock_task_allowed"]
         if opts.get("default_permission_policy"):
             primary["defaultPermissionPolicy"] = opts["default_permission_policy"]
+        roles = opts.get("application_roles") or []
+        if roles:
+            primary["roles"] = [{"roleType": r} for r in roles]
+        cert = (opts.get("signing_key_cert_sha256") or "").strip()
+        if cert:
+            primary["signingKeyCerts"] = [
+                {"signingKeyCertFingerprintSha256": cert}
+            ]
         app_list.append(primary)
 
     extra_raw = opts.get("additional_packages", "")
@@ -547,8 +708,71 @@ def build_policy_from_options(opts: dict[str, Any]) -> dict[str, Any]:
         reporting["memoryInfoEnabled"] = opts["memory_info_enabled"]
     if "display_info_enabled" in opts:
         reporting["displayInfoEnabled"] = opts["display_info_enabled"]
+    if "application_reports_enabled" in opts:
+        reporting["applicationReportsEnabled"] = opts["application_reports_enabled"]
+    if "default_application_info_reporting_enabled" in opts:
+        reporting["defaultApplicationInfoReportingEnabled"] = opts[
+            "default_application_info_reporting_enabled"
+        ]
     if reporting:
         policy["statusReportingSettings"] = reporting
+
+    # ── Wipe data flags ──
+    wipe_flags = opts.get("wipe_data_flags")
+    if wipe_flags:
+        policy["wipeDataFlags"] = wipe_flags
+
+    # ── Private space (personal usage policies) ──
+    private_space = opts.get("private_space_policy")
+    if private_space and private_space != "PRIVATE_SPACE_POLICY_UNSPECIFIED":
+        policy["personalUsagePolicies"] = {"privateSpacePolicy": private_space}
+
+    # ── Device connectivity management ──
+    connectivity: dict[str, Any] = {}
+    dns_mode = opts.get("private_dns_mode")
+    dns_host = (opts.get("private_dns_host") or "").strip()
+    if dns_mode and dns_mode != "PRIVATE_DNS_MODE_UNSPECIFIED":
+        dns: dict[str, Any] = {"privateDnsMode": dns_mode}
+        if dns_mode == "PRIVATE_DNS_SPECIFIED_HOST" and dns_host:
+            dns["privateDnsHost"] = dns_host
+        connectivity["privateDnsSettings"] = dns
+    bluetooth_sharing = opts.get("bluetooth_sharing")
+    if bluetooth_sharing and bluetooth_sharing != "BLUETOOTH_SHARING_UNSPECIFIED":
+        connectivity["bluetoothSharing"] = bluetooth_sharing
+
+    apn = _parse_optional_json(opts.get("apn_policy_json"), "apn_policy_json")
+    if apn is not None:
+        connectivity["apnPolicy"] = apn
+    pref = _parse_optional_json(
+        opts.get("preferential_network_service_settings_json"),
+        "preferential_network_service_settings_json",
+    )
+    if pref is not None:
+        connectivity["preferentialNetworkServiceSettings"] = pref
+    roaming = _parse_optional_json(
+        opts.get("wifi_roaming_policy_json"), "wifi_roaming_policy_json"
+    )
+    if roaming is not None:
+        connectivity["wifiRoamingPolicy"] = roaming
+    if connectivity:
+        policy["deviceConnectivityManagement"] = connectivity
+
+    # ── Device radio / user-initiated eSIM ──
+    esim_setting = opts.get("user_initiated_add_esim")
+    if (
+        esim_setting
+        and esim_setting != "USER_INITIATED_ADD_ESIM_SETTINGS_UNSPECIFIED"
+    ):
+        policy["deviceRadioState"] = {
+            "userInitiatedAddEsimSettings": esim_setting
+        }
+
+    default_apps = _parse_optional_json(
+        opts.get("default_application_settings_json"),
+        "default_application_settings_json",
+    )
+    if default_apps is not None:
+        policy["defaultApplicationSettings"] = default_apps
 
     return policy
 
@@ -1196,18 +1420,22 @@ class AndroidManagementOptionsFlow(OptionsFlow):
         if user_input is not None:
             policy_id = user_input["policy_id"]
             self._options["policy_id"] = policy_id
-            policy = build_policy_from_options(self._options)
-
             try:
-                coordinator = self.config_entry.runtime_data
-                await coordinator.client.async_set_policy(
-                    self.hass, policy_id, policy
-                )
-            except Exception:
-                _LOGGER.exception("Failed to apply policy '%s'", policy_id)
-                errors["base"] = "apply_failed"
+                policy = build_policy_from_options(self._options)
+            except ValueError:
+                _LOGGER.exception("Invalid advanced policy JSON")
+                errors["base"] = "invalid_json_policy"
             else:
-                return self.async_create_entry(title="", data=self._options)
+                try:
+                    coordinator = self.config_entry.runtime_data
+                    await coordinator.client.async_set_policy(
+                        self.hass, policy_id, policy
+                    )
+                except Exception:
+                    _LOGGER.exception("Failed to apply policy '%s'", policy_id)
+                    errors["base"] = "apply_failed"
+                else:
+                    return self.async_create_entry(title="", data=self._options)
 
         return self.async_show_form(
             step_id="apply_policy",

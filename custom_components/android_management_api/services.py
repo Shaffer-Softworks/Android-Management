@@ -37,6 +37,8 @@ SERVICE_GET_ENTERPRISE = "get_enterprise"
 SERVICE_PATCH_ENTERPRISE = "patch_enterprise"
 SERVICE_CREATE_WEB_TOKEN = "create_web_token"
 SERVICE_REFRESH = "refresh"
+SERVICE_MODIFY_POLICY_APPLICATIONS = "modify_policy_applications"
+SERVICE_REMOVE_POLICY_APPLICATIONS = "remove_policy_applications"
 
 ATTR_DEVICE_ID = "device_id"
 ATTR_POLICY_ID = "policy_id"
@@ -91,6 +93,9 @@ ATTR_ENTERPRISE_BODY = "enterprise_body"
 ATTR_UPDATE_MASK = "update_mask"
 ATTR_PARENT_FRAME_URL = "parent_frame_url"
 ATTR_ENABLED_FEATURES = "enabled_features"
+ATTR_APPLICATIONS = "applications"
+ATTR_APPLICATION_ROLES = "application_roles"
+ATTR_SIGNING_KEY_CERT_SHA256 = "signing_key_cert_sha256"
 
 SET_POLICY_SCHEMA = vol.Schema(
     {
@@ -122,6 +127,11 @@ SET_KIOSK_POLICY_SCHEMA = vol.Schema(
         vol.Optional(ATTR_APP_AUTO_UPDATE_POLICY, default="ALWAYS"): cv.string,
         vol.Optional(ATTR_KEYGUARD_DISABLED, default=True): cv.boolean,
         vol.Optional(ATTR_STATUS_BAR_DISABLED, default=True): cv.boolean,
+        vol.Optional(ATTR_APPLICATION_ROLES): vol.Any(
+            cv.ensure_list(cv.string),
+            vol.All(cv.string, lambda x: [f.strip() for f in x.split(",") if f.strip()]),
+        ),
+        vol.Optional(ATTR_SIGNING_KEY_CERT_SHA256): cv.string,
     }
 )
 
@@ -248,6 +258,26 @@ CREATE_WEB_TOKEN_SCHEMA = vol.Schema(
     }
 )
 
+MODIFY_POLICY_APPLICATIONS_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_POLICY_ID): cv.string,
+        vol.Required(ATTR_APPLICATIONS): vol.Any(list, cv.string),
+    }
+)
+
+REMOVE_POLICY_APPLICATIONS_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_POLICY_ID): cv.string,
+        vol.Required(ATTR_PACKAGE_NAMES): vol.Any(
+            cv.ensure_list(cv.string),
+            vol.All(
+                cv.string,
+                lambda x: [p.strip() for p in x.replace(",", "\n").splitlines() if p.strip()],
+            ),
+        ),
+    }
+)
+
 
 def _resolve_device_name(
     coordinator: AndroidManagementCoordinator, device_id: str
@@ -304,19 +334,28 @@ async def async_register_services(hass: HomeAssistant) -> None:
         coordinator = _get_coordinator(hass)
         policy_id: str = call.data[ATTR_POLICY_ID]
 
-        app_list: list[dict[str, Any]] = [
-            {
-                "packageName": call.data[ATTR_PACKAGE_NAME],
-                "installType": call.data.get(ATTR_INSTALL_TYPE, "KIOSK"),
-                "defaultPermissionPolicy": call.data.get(
-                    ATTR_DEFAULT_PERMISSION_POLICY, "GRANT"
-                ),
-                "lockTaskAllowed": call.data.get(ATTR_LOCK_TASK_ALLOWED, True),
-                "autoUpdateMode": call.data.get(
-                    ATTR_AUTO_UPDATE_MODE, "AUTO_UPDATE_HIGH_PRIORITY"
-                ),
-            }
-        ]
+        primary_app: dict[str, Any] = {
+            "packageName": call.data[ATTR_PACKAGE_NAME],
+            "installType": call.data.get(ATTR_INSTALL_TYPE, "KIOSK"),
+            "defaultPermissionPolicy": call.data.get(
+                ATTR_DEFAULT_PERMISSION_POLICY, "GRANT"
+            ),
+            "lockTaskAllowed": call.data.get(ATTR_LOCK_TASK_ALLOWED, True),
+            "autoUpdateMode": call.data.get(
+                ATTR_AUTO_UPDATE_MODE, "AUTO_UPDATE_HIGH_PRIORITY"
+            ),
+        }
+        roles = call.data.get(ATTR_APPLICATION_ROLES)
+        if roles:
+            if isinstance(roles, str):
+                roles = [r.strip() for r in roles.split(",") if r.strip()]
+            primary_app["roles"] = [{"roleType": r} for r in roles]
+        cert = call.data.get(ATTR_SIGNING_KEY_CERT_SHA256)
+        if cert:
+            primary_app["signingKeyCerts"] = [
+                {"signingKeyCertFingerprintSha256": cert.strip()}
+            ]
+        app_list: list[dict[str, Any]] = [primary_app]
         extra_raw: str | None = call.data.get(ATTR_ADDITIONAL_PACKAGES)
         if extra_raw:
             for line in extra_raw.replace(",", "\n").splitlines():
@@ -533,12 +572,68 @@ async def async_register_services(hass: HomeAssistant) -> None:
         device_info_type = call.data.get(ATTR_DEVICE_INFO_TYPE, "EID")
         await coordinator.client.async_issue_command(
             hass, device_name, "REQUEST_DEVICE_INFO",
-            requestDeviceInfoParams={
-                "deviceInfo": [device_info_type],
-            }
+            requestDeviceInfoParams={"deviceInfo": device_info_type},
         )
         await coordinator.async_request_refresh()
         _LOGGER.info("Request device info command sent for device %s", device_name)
+
+    async def handle_modify_policy_applications(call: ServiceCall) -> None:
+        """Handle modify_policy_applications service call."""
+        coordinator = _get_coordinator(hass)
+        policy_id: str = call.data[ATTR_POLICY_ID]
+        apps_raw = call.data[ATTR_APPLICATIONS]
+        try:
+            applications = (
+                json.loads(apps_raw) if isinstance(apps_raw, str) else apps_raw
+            )
+        except json.JSONDecodeError:
+            _LOGGER.error("Invalid JSON in applications")
+            return
+        if not isinstance(applications, list) or not applications:
+            _LOGGER.error("applications must be a non-empty JSON array")
+            return
+        result = await coordinator.client.async_modify_policy_applications(
+            hass, policy_id, applications
+        )
+        hass.bus.async_fire(
+            f"{DOMAIN}_policy_applications_modified",
+            {"policy_id": policy_id, "policy": result},
+        )
+        _LOGGER.info(
+            "Modified applications on policy '%s' (%s app(s))",
+            policy_id,
+            len(applications),
+        )
+
+    async def handle_remove_policy_applications(call: ServiceCall) -> None:
+        """Handle remove_policy_applications service call."""
+        coordinator = _get_coordinator(hass)
+        policy_id: str = call.data[ATTR_POLICY_ID]
+        pkgs_raw = call.data[ATTR_PACKAGE_NAMES]
+        package_names = (
+            [p.strip() for p in pkgs_raw.replace(",", "\n").splitlines() if p.strip()]
+            if isinstance(pkgs_raw, str)
+            else list(pkgs_raw)
+        )
+        if not package_names:
+            _LOGGER.error("At least one package name is required")
+            return
+        result = await coordinator.client.async_remove_policy_applications(
+            hass, policy_id, package_names
+        )
+        hass.bus.async_fire(
+            f"{DOMAIN}_policy_applications_removed",
+            {
+                "policy_id": policy_id,
+                "package_names": package_names,
+                "policy": result,
+            },
+        )
+        _LOGGER.info(
+            "Removed %s application(s) from policy '%s'",
+            len(package_names),
+            policy_id,
+        )
 
     async def handle_issue_command(call: ServiceCall) -> None:
         """Handle issue_command service call."""
@@ -740,3 +835,15 @@ async def async_register_services(hass: HomeAssistant) -> None:
         schema=CREATE_WEB_TOKEN_SCHEMA,
     )
     hass.services.async_register(DOMAIN, SERVICE_REFRESH, handle_refresh)
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_MODIFY_POLICY_APPLICATIONS,
+        handle_modify_policy_applications,
+        schema=MODIFY_POLICY_APPLICATIONS_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_REMOVE_POLICY_APPLICATIONS,
+        handle_remove_policy_applications,
+        schema=REMOVE_POLICY_APPLICATIONS_SCHEMA,
+    )
