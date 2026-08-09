@@ -13,6 +13,19 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import ALLOW_PERSONAL_USAGE_VALUES, DOMAIN
 from .coordinator import AndroidManagementCoordinator
+from .helpers import (
+    SCREEN_TIMEOUT_MODE_ENFORCED,
+    build_screen_timeout_settings,
+    parse_positive_duration,
+)
+
+
+def _cv_positive_duration(value: str) -> str:
+    """Voluptuous wrapper around parse_positive_duration."""
+    try:
+        return parse_positive_duration(value)
+    except ValueError as err:
+        raise vol.Invalid(str(err)) from err
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,8 +134,12 @@ SET_KIOSK_POLICY_SCHEMA = vol.Schema(
         vol.Optional(ATTR_SCREEN_BRIGHTNESS, default=180): vol.All(
             vol.Coerce(int), vol.Range(min=0, max=255)
         ),
-        vol.Optional(ATTR_SCREEN_TIMEOUT_MODE, default="SCREEN_TIMEOUT_ENFORCED"): cv.string,
-        vol.Optional(ATTR_SCREEN_TIMEOUT, default="220s"): cv.string,
+        vol.Optional(
+            ATTR_SCREEN_TIMEOUT_MODE, default=SCREEN_TIMEOUT_MODE_ENFORCED
+        ): cv.string,
+        vol.Optional(ATTR_SCREEN_TIMEOUT, default="220s"): vol.All(
+            cv.string, _cv_positive_duration
+        ),
         vol.Optional(ATTR_DEVELOPER_SETTINGS, default="DEVELOPER_SETTINGS_ALLOWED"): cv.string,
         vol.Optional(ATTR_APP_AUTO_UPDATE_POLICY, default="ALWAYS"): cv.string,
         vol.Optional(ATTR_KEYGUARD_DISABLED, default=True): cv.boolean,
@@ -391,12 +408,12 @@ async def async_register_services(hass: HomeAssistant) -> None:
                     ),
                     "screenBrightness": call.data.get(ATTR_SCREEN_BRIGHTNESS, 180),
                 },
-                "screenTimeoutSettings": {
-                    "screenTimeoutMode": call.data.get(
-                        ATTR_SCREEN_TIMEOUT_MODE, "SCREEN_TIMEOUT_ENFORCED"
+                "screenTimeoutSettings": build_screen_timeout_settings(
+                    call.data.get(
+                        ATTR_SCREEN_TIMEOUT_MODE, SCREEN_TIMEOUT_MODE_ENFORCED
                     ),
-                    "screenTimeout": call.data.get(ATTR_SCREEN_TIMEOUT, "220s"),
-                },
+                    call.data.get(ATTR_SCREEN_TIMEOUT),
+                ),
             },
             "advancedSecurityOverrides": {
                 "developerSettings": call.data.get(

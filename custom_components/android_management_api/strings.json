@@ -176,7 +176,8 @@
           "screen_timeout": "Timeout duration"
         },
         "data_description": {
-          "screen_timeout": "Duration string, e.g. 220s, 60s, 0s (never)"
+          "screen_timeout_mode": "Use SCREEN_TIMEOUT_USER_CHOICE to let the user control timeout (do not use 0s).",
+          "screen_timeout": "Duration greater than 0 ending with s, e.g. 220s or 60s. Required when timeout mode is ENFORCED."
         }
       },
       "security": {
@@ -313,6 +314,7 @@
     "error": {
       "apply_failed": "Failed to apply the policy. Check logs for details.",
       "invalid_json_policy": "One of the advanced JSON policy fields is invalid. Fix the JSON and try again.",
+      "invalid_screen_timeout": "Timeout duration must be greater than 0 and end with s (e.g. 220s). Use Timeout mode USER_CHOICE instead of 0s.",
       "enterprise_empty": "Configure at least one enterprise setting (Identity, Notifications, Contact, Terms, or Sign-in) before applying.",
       "apply_enterprise_failed": "Failed to apply enterprise settings. Check logs for details."
     }
