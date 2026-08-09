@@ -41,6 +41,12 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .helpers import (
+    SCREEN_TIMEOUT_MODE_ENFORCED,
+    SCREEN_TIMEOUT_MODE_USER_CHOICE,
+    build_screen_timeout_settings,
+    parse_positive_duration,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -187,8 +193,8 @@ DISPLAY_SCHEMA = {
         "BRIGHTNESS_FIXED", "BRIGHTNESS_USER_CHOICE", "BRIGHTNESS_AUTOMATIC",
     ]),
     vol.Optional("screen_brightness", default=180): _number(0, 255),
-    vol.Optional("screen_timeout_mode", default="SCREEN_TIMEOUT_ENFORCED"): _select([
-        "SCREEN_TIMEOUT_ENFORCED", "SCREEN_TIMEOUT_USER_CHOICE",
+    vol.Optional("screen_timeout_mode", default=SCREEN_TIMEOUT_MODE_ENFORCED): _select([
+        SCREEN_TIMEOUT_MODE_ENFORCED, SCREEN_TIMEOUT_MODE_USER_CHOICE,
     ]),
     vol.Optional("screen_timeout", default="220s"): _text(),
 }
@@ -640,11 +646,10 @@ def build_policy_from_options(opts: dict[str, Any]) -> dict[str, Any]:
         brightness["screenBrightnessMode"] = opts["screen_brightness_mode"]
     if "screen_brightness" in opts:
         brightness["screenBrightness"] = int(opts["screen_brightness"])
-    timeout: dict[str, Any] = {}
-    if opts.get("screen_timeout_mode"):
-        timeout["screenTimeoutMode"] = opts["screen_timeout_mode"]
-    if opts.get("screen_timeout"):
-        timeout["screenTimeout"] = opts["screen_timeout"]
+    timeout = build_screen_timeout_settings(
+        opts.get("screen_timeout_mode"),
+        opts.get("screen_timeout"),
+    )
     display: dict[str, Any] = {}
     if brightness:
         display["screenBrightnessSettings"] = brightness
@@ -1329,13 +1334,27 @@ class AndroidManagementOptionsFlow(OptionsFlow):
     async def async_step_display(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+
         if user_input is not None:
-            self._options.update(user_input)
-            return await self.async_step_init()
+            mode = user_input.get(
+                "screen_timeout_mode", SCREEN_TIMEOUT_MODE_ENFORCED
+            )
+            if mode == SCREEN_TIMEOUT_MODE_ENFORCED:
+                try:
+                    parse_positive_duration(
+                        user_input.get("screen_timeout") or "220s"
+                    )
+                except ValueError:
+                    errors["screen_timeout"] = "invalid_screen_timeout"
+            if not errors:
+                self._options.update(user_input)
+                return await self.async_step_init()
 
         return self.async_show_form(
             step_id="display",
             data_schema=_schema_with_suggestions(DISPLAY_SCHEMA, self._options),
+            errors=errors,
         )
 
     # ── Security ─────────────────────────────────────────────────────────
@@ -1422,9 +1441,14 @@ class AndroidManagementOptionsFlow(OptionsFlow):
             self._options["policy_id"] = policy_id
             try:
                 policy = build_policy_from_options(self._options)
-            except ValueError:
-                _LOGGER.exception("Invalid advanced policy JSON")
-                errors["base"] = "invalid_json_policy"
+            except ValueError as err:
+                message = str(err)
+                if "duration must be greater than 0" in message:
+                    _LOGGER.exception("Invalid screen timeout duration")
+                    errors["base"] = "invalid_screen_timeout"
+                else:
+                    _LOGGER.exception("Invalid advanced policy JSON")
+                    errors["base"] = "invalid_json_policy"
             else:
                 try:
                     coordinator = self.config_entry.runtime_data

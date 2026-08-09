@@ -166,7 +166,10 @@ set_kiosk_policy:
             - "SCREEN_TIMEOUT_USER_CHOICE"
     screen_timeout:
       name: Screen Timeout
-      description: Screen timeout duration (e.g. "220s", "60s", "0s" for never).
+      description: >-
+        Screen timeout duration greater than 0 (e.g. "220s", "60s").
+        Required when timeout mode is SCREEN_TIMEOUT_ENFORCED.
+        For user-controlled timeout, use SCREEN_TIMEOUT_USER_CHOICE instead of "0s".
       required: false
       default: "220s"
       selector:
