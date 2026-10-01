@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Screen timeout validation**: Reject non-positive / malformed `screen_timeout` values in the Display options step and `set_kiosk_policy` service before calling the API. Remove incorrect `0s (never)` hint text — the Android Management API requires a duration greater than 0. When timeout mode is `SCREEN_TIMEOUT_USER_CHOICE`, omit `screenTimeout` from the policy body as required by Google.
+
 ## [1.0.0] - 2026-07-17
 
 ### Added

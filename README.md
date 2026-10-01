@@ -185,8 +185,8 @@ Create or update a kiosk policy with structured fields. Supports a primary kiosk
 | `status_bar` | No | `NOTIFICATIONS_AND_SYSTEM_INFO_DISABLED` | Status bar behavior in kiosk mode. |
 | `screen_brightness_mode` | No | `BRIGHTNESS_FIXED` | Brightness control mode. |
 | `screen_brightness` | No | `180` | Brightness level (0–255). |
-| `screen_timeout_mode` | No | `SCREEN_TIMEOUT_ENFORCED` | Screen timeout control mode. |
-| `screen_timeout` | No | `220s` | Screen timeout duration. |
+| `screen_timeout_mode` | No | `SCREEN_TIMEOUT_ENFORCED` | Screen timeout control mode. Use `SCREEN_TIMEOUT_USER_CHOICE` for user-controlled timeout (not `0s`). |
+| `screen_timeout` | No | `220s` | Screen timeout duration greater than 0 (e.g. `220s`). Omitted when mode is `SCREEN_TIMEOUT_USER_CHOICE`. |
 | `developer_settings` | No | `DEVELOPER_SETTINGS_ALLOWED` | Developer options access. |
 | `app_auto_update_policy` | No | `ALWAYS` | Global app auto-update policy. |
 | `keyguard_disabled` | No | `true` | Disable lock screen. |
