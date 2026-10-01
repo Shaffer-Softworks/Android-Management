@@ -44,12 +44,30 @@ class AndroidManagementAPIClient:
         else:
             raise ValueError("No credentials provided")
 
-        return build(
-            "androidmanagement",
-            "v1",
-            credentials=creds,
-            cache_discovery=False,
-        )
+        # The library version is pinned to match Home Assistant core, so its bundled
+        # discovery document can lag the live API (e.g. missing enum values like
+        # WIPE_ESIMS). Prefer the live document; fall back to the bundled one.
+        try:
+            return build(
+                "androidmanagement",
+                "v1",
+                credentials=creds,
+                cache_discovery=False,
+                static_discovery=False,
+            )
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning(
+                "Could not fetch live Android Management API discovery document, "
+                "using bundled copy: %s",
+                err,
+            )
+            return build(
+                "androidmanagement",
+                "v1",
+                credentials=creds,
+                cache_discovery=False,
+                static_discovery=True,
+            )
 
     def _execute_request(self, request, max_retries: int = 3):
         """Execute a Google API request with retries for transient SSL/network errors."""
